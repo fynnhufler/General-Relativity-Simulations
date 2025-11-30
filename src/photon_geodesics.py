@@ -7,8 +7,6 @@ import os
 from matplotlib.collections import LineCollection
 from IPython.display import HTML
 
-
-
 class SchwarzschildMetric:
     """
     Represents the Schwarzschild metric with precomputed Christoffel symbols.
@@ -575,6 +573,7 @@ class PhotonSimulation:
         print(f"Video saved successfully!")
         plt.close(fig)
 
+"""
 if __name__ == "__main__":
     # Ensure the directories exist
     os.makedirs('results/plots', exist_ok=True)
@@ -779,3 +778,4 @@ if __name__ == "__main__":
     print(f"  • Time dilation becomes infinite at event horizon")
     
     print("\n" + "=" * 70)
+"""
