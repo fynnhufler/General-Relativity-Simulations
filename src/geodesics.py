@@ -369,7 +369,10 @@ class KerrMetric(Metric):
         """
         Kerr geodesic equations in equatorial plane (θ = π/2).
         
-        Uses the full equations with proper metric functions.
+        SIMPLIFIED: For a=0, this must reduce exactly to Schwarzschild.
+        For a>0, we add frame-dragging corrections.
+        
+        Reference: Bardeen et al. (1972), Eq. 2.2-2.5
         """
         t, r, phi, ut, ur, uphi = state
         
@@ -380,30 +383,50 @@ class KerrMetric(Metric):
         M = self.M
         a = self.a
         
-        Sigma, Delta, A = self.metric_functions(r)
+        # Metric functions
+        Sigma = r**2  # + a²cos²θ, but θ=π/2 so cos θ = 0
+        Delta = r**2 - 2*M*r + a**2
         
-        # Derivatives of metric functions
-        dSigma_dr = 2*r
-        dDelta_dr = 2*r - 2*M
-        dA_dr = 4*r*(r**2 + a**2) - 2*r*a**2 + 2*M*a**2
+        # For a=0, this must give Schwarzschild!
+        # Let's use that as our guide.
         
-        # Geodesic equations (equatorial plane, using conservation of E and L)
-        # These are simplified using the fact that θ = π/2 is a stable orbit
-        
-        # d²t/dτ²
-        d2t = -(dSigma_dr/Sigma) * ut * ur - (2*a*M/Sigma**2) * dSigma_dr * uphi * ur
-        
-        # d²r/dτ² (effective potential method)
-        # This is the most complex one
-        term1 = (dDelta_dr/(2*Delta)) * (ur**2)
-        term2 = ((r**2 + a**2)**2/A - r**2/Sigma) * ut**2 * dA_dr / (2*A)
-        term3 = (a**2/A - 1/Sigma) * uphi**2 * r
-        term4 = (2*a*M*r/A) * ut * uphi * dSigma_dr / Sigma
-        
-        d2r = -term1 + term2 - term3 + term4
-        
-        # d²φ/dτ²
-        d2phi = -(dSigma_dr/Sigma) * ur * uphi + (2*a*M/Sigma**2) * dSigma_dr * ut * ur
+        if abs(a) < 1e-10:
+            # Pure Schwarzschild limit
+            f = 1 - 2*M/r
+            
+            d2t = -2 * (M / (r**2 * f)) * ut * ur
+            d2r = (-M * f / r**2 * ut**2 
+                   + M / (r**2 * f) * ur**2 
+                   + (r - 2*M) * uphi**2)  # POSITIVE centrifugal!
+            d2phi = -2 / r * ur * uphi
+        else:
+            # Kerr with spin
+            # Christoffel symbols for equatorial Kerr
+            
+            # Time equation
+            Gamma_t_tr = M*r / (Sigma * Delta)
+            Gamma_t_rphi = a*M / (Sigma * Delta)
+            
+            d2t = -2 * Gamma_t_tr * ut * ur - 2 * Gamma_t_rphi * ur * uphi
+            
+            # Radial equation (critical!)
+            # Γ^r_tt, Γ^r_rr, Γ^r_φφ, Γ^r_tφ
+            Gamma_r_tt = M*Delta*(r**2 - a**2) / Sigma**3
+            Gamma_r_rr = (M*r**2 - M*a**2 - r*Delta) / (Sigma * Delta)
+            Gamma_r_pp = -Delta*r / Sigma  # Note the NEGATIVE!
+            Gamma_r_tp = 2*a*M**2*r / Sigma**3
+            
+            # The geodesic equation: d²r/dτ² = -Γ^r_μν u^μ u^ν
+            d2r = (-Gamma_r_tt * ut**2
+                   - Gamma_r_rr * ur**2
+                   - Gamma_r_pp * uphi**2      # -(-Delta*r/Sigma) = +Delta*r/Sigma
+                   - 2*Gamma_r_tp * ut * uphi)
+            
+            # Angular equation  
+            Gamma_p_rp = 1/r
+            Gamma_p_tr = -a*M / (Sigma * Delta)
+            
+            d2phi = -2 * Gamma_p_rp * ur * uphi - 2 * Gamma_p_tr * ut * ur
         
         return np.array([ut, ur, uphi, d2t, d2r, d2phi])
     
@@ -429,8 +452,9 @@ class KerrMetric(Metric):
         
         if not is_timelike:
             # Null geodesic
-            # Using the full constraint at θ = π/2
-            # 0 = g_tt(dt/dτ)² + 2g_tφ(dt/dτ)(dφ/dτ) + g_rr(dr/dτ)² + g_φφ(dφ/dτ)²
+            # For Kerr, energy and angular momentum are:
+            # E = -p_t = -(g_tt dt/dτ + g_tφ dφ/dτ)
+            # L = p_φ = g_tφ dt/dτ + g_φφ dφ/dτ
             
             # At equator:
             g_tt = -(1 - 2*self.M*r0/Sigma)
@@ -438,31 +462,45 @@ class KerrMetric(Metric):
             g_rr = Sigma/Delta
             g_phiphi = A/Sigma
             
+            # From L = b*E, we have dφ/dτ = L/Sigma (simplified for equatorial)
+            # Then solve for dt/dτ and dr/dτ
+            
             if radial_direction == "tangent":
                 # Tangential: dr/dτ = 0
-                # 0 = g_tt(dt/dτ)² + 2g_tφ(dt/dτ)(dφ/dτ) + g_φφ(dφ/dτ)²
-                # This is quadratic in dt/dτ:
-                # g_tt(dt/dτ)² + 2g_tφ·dφ/dτ·(dt/dτ) + g_φφ(dφ/dτ)² = 0
+                # Use null constraint: 0 = g_tt(dt/dτ)² + 2g_tφ(dt/dτ)(dφ/dτ) + g_φφ(dφ/dτ)²
                 
-                # Solve using quadratic formula
                 a_coef = g_tt
                 b_coef = 2 * g_tphi * dphi_dtau
                 c_coef = g_phiphi * dphi_dtau**2
                 
                 discriminant = b_coef**2 - 4*a_coef*c_coef
                 if discriminant >= 0:
-                    # Take positive root (forward in time)
                     dt_dtau = (-b_coef + np.sqrt(discriminant)) / (2*a_coef)
                 else:
-                    # Fallback
-                    dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                    dt_dtau = E / (-g_tt)  # Fallback
                 
                 dr_dtau = 0.0
-            elif radial_direction == "inward":
-                # Compute dt/dτ from energy
-                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
                 
-                # Get dr/dτ from null constraint
+            elif radial_direction == "inward":
+                # For Kerr, the relation between E, L and velocities involves solving:
+                # E = -(g_tt u^t + g_tφ u^φ)
+                # L = g_φφ u^φ + g_tφ u^t
+                
+                # From these two equations, solve for u^t and u^φ in terms of E, L:
+                # This gives (at equator):
+                det_metric = g_tt * g_phiphi - g_tphi**2
+                
+                # u^t = (g_tφ L - g_φφ E) / det
+                # u^φ = (g_tφ E - g_tt L) / det
+                
+                ut_from_EL = (g_tphi * L - g_phiphi * E) / det_metric
+                uphi_from_EL = (g_tphi * E - g_tt * L) / det_metric
+                
+                dt_dtau = ut_from_EL
+                # Note: dphi_dtau should equal uphi_from_EL, let's check
+                dphi_dtau = uphi_from_EL  # Override with correct value
+                
+                # Now get dr/dτ from null constraint
                 dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
                              - g_phiphi * dphi_dtau**2) / g_rr
                 if dr_dtau_sq >= 0:
@@ -471,7 +509,13 @@ class KerrMetric(Metric):
                     dr_dtau = 0.0
                     
             elif radial_direction == "outward":
-                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                det_metric = g_tt * g_phiphi - g_tphi**2
+                ut_from_EL = (g_tphi * L - g_phiphi * E) / det_metric
+                uphi_from_EL = (g_tphi * E - g_tt * L) / det_metric
+                
+                dt_dtau = ut_from_EL
+                dphi_dtau = uphi_from_EL
+                
                 dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
                              - g_phiphi * dphi_dtau**2) / g_rr
                 if dr_dtau_sq >= 0:
@@ -480,13 +524,18 @@ class KerrMetric(Metric):
                     dr_dtau = 0.0
                     
             elif radial_direction == "auto":
-                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                det_metric = g_tt * g_phiphi - g_tphi**2
+                ut_from_EL = (g_tphi * L - g_phiphi * E) / det_metric
+                uphi_from_EL = (g_tphi * E - g_tt * L) / det_metric
+                
+                dt_dtau = ut_from_EL
+                dphi_dtau = uphi_from_EL
+                
                 dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
                              - g_phiphi * dphi_dtau**2) / g_rr
                 if dr_dtau_sq < 0:
                     dr_dtau = 0.0
                 else:
-                    # Rough heuristic for Kerr
                     if impact_param > self.b_crit_photon:
                         dr_dtau = np.sqrt(dr_dtau_sq)
                     else:
@@ -669,7 +718,7 @@ class GeodesicSimulation:
     def simulate(self, r0: float, phi0: float = 0.0,
                 impact_param: float = 5.0,
                 is_timelike: bool = False,
-                E: float = 1.0,
+                E: float = None,  # Will auto-calculate if None
                 tau_span: Tuple[float, float] = (0, 100),
                 radial_direction: str = "tangent",
                 label: str = "") -> Trajectory:
@@ -686,8 +735,14 @@ class GeodesicSimulation:
             Impact parameter b = L/E
         is_timelike : bool
             True for massive particle, False for photon
-        E : float
-            Energy (per unit mass for massive particles)
+        E : float or None
+            Energy (per unit mass for massive particles).
+            For photons: E=1.0 is standard normalization
+            For massive particles:
+              - E < 1: Bound orbits
+              - E = 1: Particle at rest at infinity (marginally bound)
+              - E > 1: Unbound (hyperbolic) trajectories
+            If None: auto-calculated as 95% of circular orbit energy
         tau_span : tuple
             Integration range
         radial_direction : str
@@ -695,6 +750,18 @@ class GeodesicSimulation:
         label : str
             Trajectory label
         """
+        # Auto-calculate energy if not specified
+        if E is None:
+            if is_timelike:
+                # For massive particles: use slightly sub-circular energy
+                if r0 > 3 * self.metric.M:
+                    E_circ = np.sqrt((r0 - 2*self.metric.M)/(r0 - 3*self.metric.M)) / np.sqrt(r0)
+                    E = E_circ * 0.95  # 5% below circular for slow inspiral
+                else:
+                    E = 0.90  # Default for close orbits
+            else:
+                # For photons: standard normalization
+                E = 1.0
         initial_state = self.metric.get_initial_state(
             r0, phi0, impact_param, is_timelike, E, radial_direction
         )
@@ -803,7 +870,7 @@ class GeodesicSimulation:
 # ============================================================================
 # EXAMPLE USAGE
 # ============================================================================
-
+"""
 if __name__ == "__main__":
     print("\n" + "="*70)
     print("GEODESIC SIMULATOR - FIXED VERSION")
@@ -890,3 +957,4 @@ if __name__ == "__main__":
     
     print("\nSimulation complete! Use plotting code to visualize results.")
     print(f"Total trajectories: {len(trajectories)}")
+"""
