@@ -4,7 +4,7 @@ Geodesic Simulator for Black Holes
 Simulates timelike (massive particles) and null (photons) geodesics
 around Schwarzschild and Kerr black holes.
 
-Fixed version with proper initial conditions and geodesic equations.
+FIXED VERSION - Proper tangential initial conditions and impact parameter physics
 """
 
 import numpy as np
@@ -40,9 +40,14 @@ class Metric:
     def get_initial_state(self, r0: float, phi0: float, 
                          impact_param: float,
                          is_timelike: bool = False,
-                         E: float = 1.0) -> np.ndarray:
+                         E: float = 1.0,
+                         radial_direction: str = "tangent") -> np.ndarray:
         """Construct initial state satisfying geodesic constraints."""
         raise NotImplementedError("Subclasses must implement get_initial_state")
+    
+    def critical_impact_parameter(self, is_timelike: bool = False) -> float:
+        """Return critical impact parameter for capture."""
+        raise NotImplementedError("Subclasses must implement critical_impact_parameter")
 
 
 # ============================================================================
@@ -56,10 +61,29 @@ class SchwarzschildMetric(Metric):
         super().__init__(mass)
         self.r_photon = 3 * self.M  # Photon sphere
         self.r_isco = 6 * self.M    # Innermost stable circular orbit (timelike)
+        
+        # Critical impact parameters
+        self.b_crit_photon = np.sqrt(27) * self.M  # ≈ 5.196 M for photons
+        self.b_crit_massive = 4 * self.M  # Approximate for massive particles
     
     def metric_factor(self, r: float) -> float:
         """f(r) = 1 - 2M/r"""
         return 1 - 2*self.M/r if r > self.r_s else 0.0
+    
+    def critical_impact_parameter(self, is_timelike: bool = False) -> float:
+        """
+        Return critical impact parameter for capture.
+        
+        For photons: b_crit = √27 M ≈ 5.196 M
+        For massive particles: b_crit ≈ 4 M (approximate)
+        
+        Particles with b > b_crit escape
+        Particles with b < b_crit are captured
+        """
+        if is_timelike:
+            return self.b_crit_massive
+        else:
+            return self.b_crit_photon
     
     def geodesic_equations(self, tau: float, state: np.ndarray, 
                           is_timelike: bool = False) -> np.ndarray:
@@ -78,13 +102,18 @@ class SchwarzschildMetric(Metric):
         M = self.M
         
         # Christoffel symbols (equatorial plane)
+        # IMPORTANT: Sign convention!
+        # The centrifugal term +(r-2M)(dφ/dτ)² is POSITIVE (pushes outward)
+        # This comes from Γ^r_φφ = -(r-2M), so the term is -Γ^r_φφ(dφ/dτ)²
+        
         # d²t/dτ² = -2 (M/r²) / f * (dt/dτ)(dr/dτ)
         d2t = -2 * (M / (r**2 * f)) * ut * ur
         
-        # d²r/dτ² = -M(1-2M/r)/r² (dt/dτ)² + M/(r²(1-2M/r)) (dr/dτ)² - (r-2M)(dφ/dτ)²
+        # d²r/dτ² = -M(1-2M/r)/r² (dt/dτ)² + M/(r²(1-2M/r)) (dr/dτ)² + (r-2M)(dφ/dτ)²
+        # Note: The centrifugal term is POSITIVE (pushes outward)
         d2r = (-M * f / r**2 * ut**2 
                + M / (r**2 * f) * ur**2 
-               - (r - 2*M) * uphi**2)
+               + (r - 2*M) * uphi**2)  # POSITIVE! This was the bug!
         
         # d²φ/dτ² = -2/r (dr/dτ)(dφ/dτ)
         d2phi = -2 / r * ur * uphi
@@ -94,7 +123,8 @@ class SchwarzschildMetric(Metric):
     def get_initial_state(self, r0: float, phi0: float = 0.0, 
                          impact_param: float = 5.0,
                          is_timelike: bool = False,
-                         E: float = 1.0) -> np.ndarray:
+                         E: float = 1.0,
+                         radial_direction: str = "tangent") -> np.ndarray:
         """
         Create initial conditions using conserved quantities.
         
@@ -104,8 +134,10 @@ class SchwarzschildMetric(Metric):
         
         The impact parameter b = L/E relates them.
         
-        For photons starting at large r moving tangentially:
-        b ≈ r * sin(angle) where angle is the initial direction
+        Critical values for photons:
+        - b > √27 M ≈ 5.196 M: photon escapes
+        - b < √27 M: photon is captured
+        - b = √27 M: photon orbits at r = 3M (photon sphere)
         
         Parameters:
         -----------
@@ -114,11 +146,16 @@ class SchwarzschildMetric(Metric):
         phi0 : float
             Initial angle
         impact_param : float
-            Impact parameter b = L/E (determines how close photon passes)
+            Impact parameter b = L/E (determines trajectory fate)
         is_timelike : bool
             True for massive particles, False for photons
         E : float
             Energy (per unit mass for massive particles)
+        radial_direction : str
+            "tangent" = dr/dτ = 0 (tangential start)
+            "inward" = dr/dτ < 0 (moving inward)
+            "outward" = dr/dτ > 0 (moving outward)
+            "auto" = determine from effective potential
         """
         t0 = 0.0
         f = self.metric_factor(r0)
@@ -126,46 +163,151 @@ class SchwarzschildMetric(Metric):
         # Set angular momentum from impact parameter
         L = impact_param * E
         
-        # For null geodesics (photons):
-        # Energy equation: E² = f(dr/dτ)² + (L²/r² + κ)f
-        # where κ = 0 for null, κ = 1 for timelike
-        
         # Angular velocity dφ/dτ
         dphi_dtau = L / r0**2
         
         if not is_timelike:
-            # Null geodesic (photon)
+            # ============================================================
+            # NULL GEODESIC (PHOTON)
+            # ============================================================
             # From constraint: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = 0
-            # Using E² = f²(dt/dτ)² and L = r²(dφ/dτ):
-            # (dr/dτ)² = E² - f*L²/r²
             
-            dr_dtau_sq = E**2 - f * L**2 / r0**2
-            
-            # Start moving inward if dr/dτ² < 0, outward otherwise
-            if dr_dtau_sq < 0:
-                # Photon will spiral in - start with dr/dτ = 0 at turning point
-                dr_dtau = 0.0
-                # Recalculate to ensure consistency
-                dr_dtau_sq = max(0, E**2 - f * L**2 / r0**2)
-            
-            dr_dtau = -np.sqrt(abs(dr_dtau_sq))  # Negative = inward
-            
-            # Time component: dt/dτ = E/f
-            dt_dtau = E / f
-        else:
-            # Timelike geodesic (massive particle)
-            # From constraint: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = -1
-            # (dr/dτ)² = E² - (1 + L²/r²)f
-            
-            dr_dtau_sq = E**2 - (1 + L**2 / r0**2) * f
-            
-            if dr_dtau_sq < 0:
-                dr_dtau = 0.0
+            if radial_direction == "tangent":
+                # Tangential start: dr/dτ ≈ 0 (very small)
+                # For truly tangential motion at r₀, the impact parameter is fixed:
+                # b_tangential = r₀ / √(1 - 2M/r₀)
+                # If user specifies different b, we add small radial velocity
+                
+                # First: compute what b would be for EXACTLY tangential
+                b_exact_tangential = r0 / np.sqrt(f) if f > 0 else impact_param
+                
+                # Set dt/dτ from energy
+                dt_dtau = E / f
+                
+                # Compute dr/dτ from null constraint
+                # (dr/dτ)² = E² - f·L²/r² 
+                dr_dtau_sq = E**2 - f * L**2 / r0**2
+                
+                if abs(impact_param - b_exact_tangential) / b_exact_tangential < 0.01:
+                    # Close enough to tangential - set dr/dτ = 0
+                    dr_dtau = 0.0
+                elif dr_dtau_sq >= 0:
+                    # Need radial motion to achieve desired impact parameter
+                    # Determine direction based on impact parameter
+                    if impact_param > b_exact_tangential:
+                        # Larger b means photon should move outward initially
+                        dr_dtau = np.sqrt(dr_dtau_sq)
+                    else:
+                        # Smaller b means photon should move inward initially  
+                        dr_dtau = -np.sqrt(dr_dtau_sq)
+                else:
+                    # dr²/dτ² < 0: at turning point
+                    dr_dtau = 0.0
+                
+            elif radial_direction == "inward":
+                # Inward motion with proper null constraint
+                # We need: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = 0
+                # Solve for dr/dτ given E and L
+                
+                # From E = f·dt/dτ and null constraint:
+                # (dr/dτ)² = E² - f·L²/r²
+                dr_dtau_sq = E**2 - f * L**2 / r0**2
+                
+                if dr_dtau_sq >= 0:
+                    dr_dtau = -np.sqrt(dr_dtau_sq)  # negative = inward
+                    dt_dtau = E / f
+                else:
+                    # At turning point
+                    dr_dtau = 0.0
+                    dt_dtau = r0 * dphi_dtau / np.sqrt(f) if f > 0 else E / f
+                    
+            elif radial_direction == "outward":
+                # Outward motion with proper null constraint
+                dr_dtau_sq = E**2 - f * L**2 / r0**2
+                
+                if dr_dtau_sq >= 0:
+                    dr_dtau = np.sqrt(dr_dtau_sq)  # positive = outward
+                    dt_dtau = E / f
+                else:
+                    # At turning point
+                    dr_dtau = 0.0
+                    dt_dtau = r0 * dphi_dtau / np.sqrt(f) if f > 0 else E / f
+                    
+            elif radial_direction == "auto":
+                # Determine direction from effective potential
+                dr_dtau_sq = E**2 - f * L**2 / r0**2
+                
+                if dr_dtau_sq < 0:
+                    # Beyond turning point - start tangentially
+                    dr_dtau = 0.0
+                    dt_dtau = r0 * dphi_dtau / np.sqrt(f) if f > 0 else E / f
+                else:
+                    dt_dtau = E / f
+                    # Check if we're at a stable/unstable point
+                    # For r > 3M with b > b_crit: move outward
+                    # For r < 3M or b < b_crit: move inward
+                    
+                    if impact_param > self.b_crit_photon:
+                        # Should escape - move outward
+                        dr_dtau = np.sqrt(dr_dtau_sq)
+                    else:
+                        # Should be captured - move inward
+                        dr_dtau = -np.sqrt(dr_dtau_sq)
             else:
-                dr_dtau = -np.sqrt(dr_dtau_sq)  # Negative = inward
+                raise ValueError(f"Unknown radial_direction: {radial_direction}")
+        
+        else:
+            # ============================================================
+            # TIMELIKE GEODESIC (MASSIVE PARTICLE)
+            # ============================================================
+            # From constraint: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = -1
             
-            # Time component: dt/dτ = E/f
-            dt_dtau = E / f
+            if radial_direction == "tangent":
+                # Tangential start: dr/dτ = 0
+                # For dr/dτ = 0: -f(dt/dτ)² + r²(dφ/dτ)² = -1
+                # → f(dt/dτ)² = 1 + r²(dφ/dτ)²
+                # → dt/dτ = √[(1 + r²(dφ/dτ)²) / f]
+                
+                dr_dtau = 0.0
+                dt_dtau = np.sqrt((1 + r0**2 * dphi_dtau**2) / f) if f > 0 else E / f
+                
+            elif radial_direction == "inward":
+                # Inward motion
+                # (dr/dτ)² = E² - (1 + L²/r²)f
+                dr_dtau_sq = E**2 - (1 + L**2 / r0**2) * f
+                
+                if dr_dtau_sq >= 0:
+                    dr_dtau = -np.sqrt(dr_dtau_sq)
+                    dt_dtau = E / f
+                else:
+                    dr_dtau = 0.0
+                    dt_dtau = np.sqrt((1 + r0**2 * dphi_dtau**2) / f) if f > 0 else E / f
+                    
+            elif radial_direction == "outward":
+                # Outward motion
+                dr_dtau_sq = E**2 - (1 + L**2 / r0**2) * f
+                
+                if dr_dtau_sq >= 0:
+                    dr_dtau = np.sqrt(dr_dtau_sq)
+                    dt_dtau = E / f
+                else:
+                    dr_dtau = 0.0
+                    dt_dtau = np.sqrt((1 + r0**2 * dphi_dtau**2) / f) if f > 0 else E / f
+                    
+            elif radial_direction == "auto":
+                dr_dtau_sq = E**2 - (1 + L**2 / r0**2) * f
+                
+                if dr_dtau_sq < 0:
+                    dr_dtau = 0.0
+                    dt_dtau = np.sqrt((1 + r0**2 * dphi_dtau**2) / f) if f > 0 else E / f
+                else:
+                    dt_dtau = E / f
+                    if impact_param > self.b_crit_massive:
+                        dr_dtau = np.sqrt(dr_dtau_sq)
+                    else:
+                        dr_dtau = -np.sqrt(dr_dtau_sq)
+            else:
+                raise ValueError(f"Unknown radial_direction: {radial_direction}")
         
         return np.array([t0, r0, phi0, dt_dtau, dr_dtau, dphi_dtau])
 
@@ -197,6 +339,17 @@ class KerrMetric(Metric):
         
         # Ergosphere (at equator)
         self.r_ergo = 2 * self.M
+        
+        # Critical impact parameter (approximate, depends on spin and co/counter-rotating)
+        self.b_crit_photon = np.sqrt(27) * self.M  # Rough estimate
+    
+    def critical_impact_parameter(self, is_timelike: bool = False) -> float:
+        """
+        Return approximate critical impact parameter for Kerr.
+        Note: This is spin-dependent and different for co/counter-rotating orbits.
+        """
+        # This is a rough approximation
+        return self.b_crit_photon
     
     def metric_functions(self, r: float):
         """
@@ -257,7 +410,8 @@ class KerrMetric(Metric):
     def get_initial_state(self, r0: float, phi0: float = 0.0,
                          impact_param: float = 5.0,
                          is_timelike: bool = False,
-                         E: float = 1.0) -> np.ndarray:
+                         E: float = 1.0,
+                         radial_direction: str = "tangent") -> np.ndarray:
         """
         Create initial conditions for Kerr geodesics (equatorial plane).
         
@@ -284,19 +438,62 @@ class KerrMetric(Metric):
             g_rr = Sigma/Delta
             g_phiphi = A/Sigma
             
-            # Time component: relates to energy
-            # E = -g_tt(dt/dτ) - g_tφ(dφ/dτ)
-            dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
-            
-            # Radial velocity from null constraint
-            # g_rr(dr/dτ)² = -g_tt(dt/dτ)² - 2g_tφ(dt/dτ)(dφ/dτ) - g_φφ(dφ/dτ)²
-            dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
-                         - g_phiphi * dphi_dtau**2) / g_rr
-            
-            if dr_dtau_sq < 0:
+            if radial_direction == "tangent":
+                # Tangential: dr/dτ = 0
+                # 0 = g_tt(dt/dτ)² + 2g_tφ(dt/dτ)(dφ/dτ) + g_φφ(dφ/dτ)²
+                # This is quadratic in dt/dτ:
+                # g_tt(dt/dτ)² + 2g_tφ·dφ/dτ·(dt/dτ) + g_φφ(dφ/dτ)² = 0
+                
+                # Solve using quadratic formula
+                a_coef = g_tt
+                b_coef = 2 * g_tphi * dphi_dtau
+                c_coef = g_phiphi * dphi_dtau**2
+                
+                discriminant = b_coef**2 - 4*a_coef*c_coef
+                if discriminant >= 0:
+                    # Take positive root (forward in time)
+                    dt_dtau = (-b_coef + np.sqrt(discriminant)) / (2*a_coef)
+                else:
+                    # Fallback
+                    dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                
                 dr_dtau = 0.0
+            elif radial_direction == "inward":
+                # Compute dt/dτ from energy
+                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                
+                # Get dr/dτ from null constraint
+                dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
+                             - g_phiphi * dphi_dtau**2) / g_rr
+                if dr_dtau_sq >= 0:
+                    dr_dtau = -np.sqrt(dr_dtau_sq)
+                else:
+                    dr_dtau = 0.0
+                    
+            elif radial_direction == "outward":
+                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
+                             - g_phiphi * dphi_dtau**2) / g_rr
+                if dr_dtau_sq >= 0:
+                    dr_dtau = np.sqrt(dr_dtau_sq)
+                else:
+                    dr_dtau = 0.0
+                    
+            elif radial_direction == "auto":
+                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
+                             - g_phiphi * dphi_dtau**2) / g_rr
+                if dr_dtau_sq < 0:
+                    dr_dtau = 0.0
+                else:
+                    # Rough heuristic for Kerr
+                    if impact_param > self.b_crit_photon:
+                        dr_dtau = np.sqrt(dr_dtau_sq)
+                    else:
+                        dr_dtau = -np.sqrt(dr_dtau_sq)
             else:
-                dr_dtau = -np.sqrt(dr_dtau_sq)  # Inward
+                raise ValueError(f"Unknown radial_direction: {radial_direction}")
+                
         else:
             # Timelike geodesic
             g_tt = -(1 - 2*self.M*r0/Sigma)
@@ -304,16 +501,53 @@ class KerrMetric(Metric):
             g_rr = Sigma/Delta
             g_phiphi = A/Sigma
             
-            dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
-            
-            # Timelike constraint: g_μν u^μ u^ν = -1
-            dr_dtau_sq = (-1 - g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
-                         - g_phiphi * dphi_dtau**2) / g_rr
-            
-            if dr_dtau_sq < 0:
+            if radial_direction == "tangent":
+                # Tangential: dr/dτ = 0
+                # -1 = g_tt(dt/dτ)² + 2g_tφ(dt/dτ)(dφ/dτ) + g_φφ(dφ/dτ)²
+                # Quadratic in dt/dτ
+                
+                a_coef = g_tt
+                b_coef = 2 * g_tphi * dphi_dtau
+                c_coef = g_phiphi * dphi_dtau**2 + 1
+                
+                discriminant = b_coef**2 - 4*a_coef*c_coef
+                if discriminant >= 0:
+                    dt_dtau = (-b_coef + np.sqrt(discriminant)) / (2*a_coef)
+                else:
+                    dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                
                 dr_dtau = 0.0
+            elif radial_direction == "inward":
+                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                dr_dtau_sq = (-1 - g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
+                             - g_phiphi * dphi_dtau**2) / g_rr
+                if dr_dtau_sq >= 0:
+                    dr_dtau = -np.sqrt(dr_dtau_sq)
+                else:
+                    dr_dtau = 0.0
+                    
+            elif radial_direction == "outward":
+                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                dr_dtau_sq = (-1 - g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
+                             - g_phiphi * dphi_dtau**2) / g_rr
+                if dr_dtau_sq >= 0:
+                    dr_dtau = np.sqrt(dr_dtau_sq)
+                else:
+                    dr_dtau = 0.0
+                    
+            elif radial_direction == "auto":
+                dt_dtau = (E + g_tphi * dphi_dtau) / (-g_tt)
+                dr_dtau_sq = (-1 - g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
+                             - g_phiphi * dphi_dtau**2) / g_rr
+                if dr_dtau_sq < 0:
+                    dr_dtau = 0.0
+                else:
+                    if impact_param > self.b_crit_photon:
+                        dr_dtau = np.sqrt(dr_dtau_sq)
+                    else:
+                        dr_dtau = -np.sqrt(dr_dtau_sq)
             else:
-                dr_dtau = -np.sqrt(dr_dtau_sq)
+                raise ValueError(f"Unknown radial_direction: {radial_direction}")
         
         return np.array([t0, r0, phi0, dt_dtau, dr_dtau, dphi_dtau])
 
@@ -437,6 +671,7 @@ class GeodesicSimulation:
                 is_timelike: bool = False,
                 E: float = 1.0,
                 tau_span: Tuple[float, float] = (0, 100),
+                radial_direction: str = "tangent",
                 label: str = "") -> Trajectory:
         """
         Simulate single particle trajectory.
@@ -455,11 +690,13 @@ class GeodesicSimulation:
             Energy (per unit mass for massive particles)
         tau_span : tuple
             Integration range
+        radial_direction : str
+            "tangent", "inward", "outward", or "auto"
         label : str
             Trajectory label
         """
         initial_state = self.metric.get_initial_state(
-            r0, phi0, impact_param, is_timelike, E
+            r0, phi0, impact_param, is_timelike, E, radial_direction
         )
         
         solution = self.integrator.integrate(
@@ -471,23 +708,185 @@ class GeodesicSimulation:
         
         return trajectory
     
-    def simulate_bundle(self, r0_values: np.ndarray, 
-                       impact_param: float = 5.0,
+    def simulate_bundle(self, r0: float, 
+                       impact_params: np.ndarray,
                        is_timelike: bool = False,
-                       tau_span: Tuple[float, float] = (0, 100)) -> List[Trajectory]:
+                       tau_span: Tuple[float, float] = (0, 100),
+                       radial_direction: str = "tangent") -> List[Trajectory]:
         """
-        Simulate multiple particles at different radii.
+        Simulate multiple particles with different impact parameters.
         """
         self.trajectories = []
         
-        for i, r0 in enumerate(r0_values):
-            label = f"r₀={r0:.2f}"
-            traj = self.simulate(r0, 0.0, impact_param, is_timelike, 1.0,
-                               tau_span, label)
-            print(f"Simulated: {label}, points: {len(traj)}")
+        b_crit = self.metric.critical_impact_parameter(is_timelike)
+        particle_type = "massive" if is_timelike else "photon"
         
+        print(f"\n{'='*60}")
+        print(f"Simulating {particle_type}s around {self.metric.__class__.__name__}")
+        print(f"Critical impact parameter: b_crit = {b_crit:.3f} M")
+        print(f"Initial radius: r₀ = {r0:.2f} M")
+        print(f"Radial direction: {radial_direction}")
+        print(f"{'='*60}\n")
+        
+        for i, b in enumerate(impact_params):
+            fate = "ESCAPE" if b > b_crit else "CAPTURE"
+            label = f"b={b:.3f}M ({fate})"
+            
+            traj = self.simulate(r0, 0.0, b, is_timelike, 1.0,
+                               tau_span, radial_direction, label)
+            
+            # Determine actual fate
+            if len(traj) > 0:
+                if traj.r[-1] > 50:
+                    actual = "escaped"
+                elif traj.r[-1] < self.metric.r_s * 2:
+                    actual = "captured"
+                else:
+                    actual = "orbiting"
+                print(f"  {label:30s} → {actual:10s} (points: {len(traj)})")
+        
+        print(f"\n{'='*60}\n")
+        return self.trajectories
+    
+    def simulate_random_bundle(self, n_particles: int = 20,
+                              r_range: Tuple[float, float] = (5, 30),
+                              impact_range: Tuple[float, float] = (2, 10),
+                              is_timelike: bool = False,
+                              tau_span: Tuple[float, float] = (0, 100)) -> List[Trajectory]:
+        """
+        Simulate particles with random initial conditions.
+        
+        Useful for exploring the phase space of trajectories.
+        """
+        self.trajectories = []
+        
+        particle_type = "massive" if is_timelike else "photon"
+        print(f"\n{'='*60}")
+        print(f"Simulating {n_particles} random {particle_type}s")
+        print(f"{'='*60}\n")
+        
+        # Random initial conditions
+        r0_values = np.random.uniform(r_range[0], r_range[1], n_particles)
+        phi0_values = np.random.uniform(0, 2*np.pi, n_particles)
+        b_values = np.random.uniform(impact_range[0], impact_range[1], n_particles)
+        
+        # Random radial directions
+        directions = np.random.choice(["tangent", "inward", "outward"], n_particles)
+        
+        for i in range(n_particles):
+            label = f"particle_{i+1}"
+            
+            traj = self.simulate(
+                r0_values[i], phi0_values[i], b_values[i], 
+                is_timelike, 1.0, tau_span, directions[i], label
+            )
+            
+            if len(traj) > 0:
+                if traj.r[-1] > 50:
+                    fate = "escaped"
+                elif traj.r[-1] < self.metric.r_s * 2:
+                    fate = "captured"
+                else:
+                    fate = "orbiting"
+                    
+                print(f"  Particle {i+1:2d}: r₀={r0_values[i]:5.2f}, "
+                      f"b={b_values[i]:5.2f}, dir={directions[i]:8s} → {fate}")
+        
+        print(f"\n{'='*60}\n")
         return self.trajectories
     
     def clear(self):
         """Clear all stored trajectories."""
         self.trajectories = []
+
+
+# ============================================================================
+# EXAMPLE USAGE
+# ============================================================================
+
+if __name__ == "__main__":
+    print("\n" + "="*70)
+    print("GEODESIC SIMULATOR - FIXED VERSION")
+    print("="*70)
+    
+    # Create Schwarzschild metric
+    metric = SchwarzschildMetric(mass=1.0)
+    sim = GeodesicSimulation(metric)
+    
+    print(f"\nSchwarschild Black Hole Parameters:")
+    print(f"  Mass: M = {metric.M}")
+    print(f"  Schwarzschild radius: r_s = {metric.r_s} M")
+    print(f"  Photon sphere: r_photon = {metric.r_photon} M")
+    print(f"  Critical impact parameter (photons): b_crit = {metric.b_crit_photon:.3f} M")
+    
+    # ========================================================================
+    # Example 1: Photons coming from far away (inward motion)
+    # ========================================================================
+    print("\n" + "="*70)
+    print("EXAMPLE 1: Photons from infinity (inward motion)")
+    print("="*70)
+    
+    # Simulate photon bundle with different impact parameters
+    # Photons coming from far away (inward motion)
+    b_crit = metric.b_crit_photon
+    impact_params = np.array([
+        b_crit * 0.7,   # Should be captured
+        b_crit * 0.85,  # Should be captured
+        b_crit * 0.95,  # Should be captured
+        b_crit * 1.0,   # Critical - barely escapes or orbits
+        b_crit * 1.05,  # Should escape
+        b_crit * 1.15,  # Should escape
+        b_crit * 1.3,   # Should escape
+    ])
+    
+    trajectories = sim.simulate_bundle(
+        r0=15.0,
+        impact_params=impact_params,
+        is_timelike=False,
+        tau_span=(0, 150),
+        radial_direction="inward"  # Photons from infinity
+    )
+    
+    # ========================================================================
+    # Example 2: Photons starting tangentially at different radii
+    # ========================================================================
+    print("\n" + "="*70)
+    print("EXAMPLE 2: Tangential photons at various radii")
+    print("="*70)
+    
+    sim.clear()
+    
+    # For tangential photons at radius r, the effective impact parameter is:
+    # b_eff(r) = r / √(1 - 2M/r)
+    # We'll place photons at different radii to see different behaviors
+    
+    radii = np.array([4.0, 5.0, 6.0, 8.0, 10.0])
+    
+    for r0 in radii:
+        # Compute the effective impact parameter for tangential orbit at this radius
+        f = metric.metric_factor(r0)
+        b_eff = r0 / np.sqrt(f) if f > 0 else 0
+        
+        # Use this as the impact parameter
+        traj = sim.simulate(
+            r0=r0,
+            phi0=0.0,
+            impact_param=b_eff,
+            is_timelike=False,
+            tau_span=(0, 100),
+            radial_direction="tangent",
+            label=f"r₀={r0:.1f}M (b={b_eff:.2f}M)"
+        )
+        
+        if len(traj) > 0:
+            if traj.r[-1] > 50:
+                fate = "escaped"
+            elif traj.r[-1] < metric.r_s * 2:
+                fate = "captured"
+            else:
+                fate = "orbiting"
+                
+            print(f"  r₀={r0:4.1f}M, b_eff={b_eff:5.2f}M → {fate:10s} (points: {len(traj)})")
+    
+    print("\nSimulation complete! Use plotting code to visualize results.")
+    print(f"Total trajectories: {len(trajectories)}")
