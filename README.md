@@ -6,15 +6,15 @@ A high-performance Python simulator for computing and visualizing particle traje
 
 ## Demonstrations
 
+<p align="center">
+  <img src="results/videos/video7_critical_orbits.gif" alt="Schwarzschild Critical Orbits" width="30%" />
+  <img src="results/videos/kerr_moderate_scatter.gif" alt="Kerr Frame Dragging" width="30%" />
+  <img src="results/videos/video5_energy_dependence_fast_long.gif" alt="Energy Dependence" width="30%" />
+</p>
 
-### Schwarzschild Black Hole - Photon Trajectories
-![Schwarzschild Null Geodesics](results/videos/video7_critical_orbits.gif)
-
-### Kerr Black Hole - Frame Dragging Effect
-![Kerr Frame Dragging](results/videos/kerr_moderate_scatter.gif)
-
-### Massive Particle Orbits
-![Timelike Geodesics](results/videos/video5_energy_dependence_fast_long.gif)
+<p align="center">
+  <em>Left: Schwarzschild photon trajectories near critical impact parameter | Center: Kerr black hole frame dragging | Right: Energy-dependent massive particle orbits</em>
+</p>
 
 ---
 
