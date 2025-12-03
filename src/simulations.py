@@ -515,3 +515,315 @@ anim4.save('./results/videos/video4_orbits_corrected.gif', writer=writer, dpi=80
 plt.close()
 
 print(f"Saved: results/videos/video4_orbits_corrected.gif")
+
+# ============================================================================
+# VIDEO 5: Energy Dependence (NEW!)
+# ============================================================================
+
+print("\n" + "="*70)
+print("VIDEO 5: Energy Dependence")
+print("="*70)
+
+start_time = time.time()
+
+sim.clear()
+
+# Fixed starting radius and impact parameter, vary energy
+r0 = 10.0
+b = 6.0
+E_circ = np.sqrt((r0 - 2)/(r0 - 3)) / np.sqrt(r0)
+
+energies = [
+    (0.4, "E = 0.4"),
+    (0.5, "E = 0.5"),
+    (0.6, "E = 0.6"),
+    (0.7, "E = 0.7"),
+    (0.8, "E = 0.8"),
+    (0.9, "E = 0.9"),
+]
+
+trajectories_energy = []
+energy_labels = []
+
+print(f"Starting radius: r0 = {r0}M")
+print(f"Impact parameter: b = {b}M")
+print(f"Circular energy: E_circ = {E_circ:.4f}")
+print(f"\nSimulating {len(energies)} trajectories...")
+
+for E, label in energies:
+    traj = sim.simulate(
+        r0=r0, phi0=0, impact_param=b,
+        is_timelike=True, E=E, tau_span=(0, 800),
+        radial_direction="inward", label=label
+    )
+    trajectories_energy.append(traj)
+    energy_labels.append(label)
+    
+    if len(traj) > 0:
+        min_r = np.min(traj.r)
+        final_r = traj.r[-1]
+        print(f"  {label}: min_r={min_r:.2f}M, final_r={final_r:.2f}M")
+
+elapsed = time.time() - start_time
+print(f"Complete in {elapsed:.2f}s")
+
+# Animate Video 5
+print("Creating animation...")
+fig, ax = plt.subplots(figsize=(12, 12))
+ax.set_facecolor('#1a1a1a')
+fig.patch.set_facecolor('#1a1a1a')
+
+ax.set_xlim(-15, 15)
+ax.set_ylim(-15, 15)
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.2, color='gray')
+ax.set_xlabel('x (M)', fontsize=14, color='white', fontweight='bold')
+ax.set_ylabel('y (M)', fontsize=14, color='white', fontweight='bold')
+
+horizon = Circle((0, 0), metric.r_s, color=HORIZON_COLOR, zorder=10)
+ax.add_patch(horizon)
+horizon_ring = Circle((0, 0), metric.r_s, fill=False,
+                      color=HORIZON_RING_COLOR, linewidth=2, zorder=11)
+ax.add_patch(horizon_ring)
+isco = Circle((0, 0), metric.r_isco, fill=False,
+              color=ISCO_COLOR, linestyle='--', linewidth=2, zorder=9)
+ax.add_patch(isco)
+
+# Mark starting radius
+start_circle = Circle((0, 0), r0, fill=False, color='white',
+                      linestyle=':', linewidth=1, alpha=0.3, zorder=2)
+ax.add_patch(start_circle)
+
+# Color gradient
+colors_energy = plt.cm.plasma(np.linspace(0.1, 0.9, len(energies)))
+
+lines_energy = []
+points_energy = []
+for i, (traj, label) in enumerate(zip(trajectories_energy, energy_labels)):
+    if len(traj) > 0:
+        line, = ax.plot([], [], color=colors_energy[i], linewidth=2.5, 
+                       alpha=0.8, label=label, zorder=5)
+        point, = ax.plot([], [], 'o', color=colors_energy[i], 
+                        markersize=8, markeredgecolor='white',
+                        markeredgewidth=1.5, zorder=6)
+        lines_energy.append((line, traj))
+        points_energy.append((point, traj))
+
+ax.legend(loc='upper left', fontsize=10, framealpha=0.9, 
+         facecolor='#2a2a2a', edgecolor='white')
+
+title5 = ax.text(0.5, 1.02, '', transform=ax.transAxes,
+                ha='center', fontsize=16, fontweight='bold', color='white')
+
+# Info box
+info_text = f"r₀ = {r0}M\nb = {b}M\nE_circ = {E_circ:.4f}\n\nAll E < 1"
+info_box = ax.text(0.98, 0.98, info_text, transform=ax.transAxes,
+                  verticalalignment='top', horizontalalignment='right',
+                  fontsize=11, color='white',
+                  bbox=dict(boxstyle='round', facecolor='#2a2a2a', alpha=0.9,
+                           edgecolor='white', linewidth=1.5))
+
+def init5():
+    for line, _ in lines_energy:
+        line.set_data([], [])
+    for point, _ in points_energy:
+        point.set_data([], [])
+    title5.set_text('Energy Dependence: τ = 0')
+    return [l for l, _ in lines_energy] + [p for p, _ in points_energy] + [title5]
+
+def animate5(frame):
+    for line, traj in lines_energy:
+        idx = min(frame * 3, len(traj) - 1)
+        line.set_data(traj.x[:idx], traj.y[:idx])
+    
+    for point, traj in points_energy:
+        idx = min(frame * 3, len(traj) - 1)
+        if idx < len(traj):
+            point.set_data([traj.x[idx]], [traj.y[idx]])
+    
+    if len(lines_energy) > 0:
+        max_idx = min(frame * 3, min(len(traj) for _, traj in lines_energy) - 1)
+        if max_idx >= 0 and max_idx < len(lines_energy[0][1].tau):
+            tau_val = lines_energy[0][1].tau[max_idx]
+            title5.set_text(f'Energy Dependence: τ = {tau_val:.1f}')
+    
+    return [l for l, _ in lines_energy] + [p for p, _ in points_energy] + [title5]
+
+max_len5 = max([len(traj) for _, traj in lines_energy]) if lines_energy else 100
+n_frames5 = min(max_len5 // 3, 250)
+
+anim5 = FuncAnimation(fig, animate5, init_func=init5,
+                     frames=n_frames5, interval=50, blit=True)
+
+writer = PillowWriter(fps=20)
+anim5.save('./results/videos/video5_energy_dependence.gif', writer=writer, dpi=80)
+plt.close()
+
+print(f"Saved: results/videos/video5_energy_dependence.gif")
+
+metric = SchwarzschildMetric(mass=1.0)
+
+print("\n" + "="*70)
+print("VIDEO 5: Energy Dependence - FAST & LONG")
+print("="*70)
+
+# ============================================================================
+# Simulate Trajectories - LONGER
+# ============================================================================
+
+print("\nSimulating trajectories...")
+start_time = time.time()
+
+sim = GeodesicSimulation(metric)
+
+r0 = 10.0
+b = 6.0
+E_circ = np.sqrt((r0 - 2)/(r0 - 3)) / np.sqrt(r0)
+
+energies = [
+    (0.4, "E = 0.4"),
+    (0.5, "E = 0.5"),
+    (0.6, "E = 0.6"),
+    (0.7, "E = 0.7"),
+    (0.8, "E = 0.8"),
+    (0.9, "E = 0.9"),
+]
+
+trajectories_energy = []
+energy_labels = []
+
+print(f"Starting radius: r0 = {r0}M")
+print(f"Impact parameter: b = {b}M")
+print(f"Circular energy: E_circ = {E_circ:.4f}")
+print(f"\nSimulating {len(energies)} trajectories (LONG: τ=2000M)...")
+
+for E, label in energies:
+    traj = sim.simulate(
+        r0=r0, phi0=0, impact_param=b,
+        is_timelike=True, E=E, 
+        tau_span=(0, 2000),  # 🚀 2.5x LONGER (was 800)
+        radial_direction="inward", label=label
+    )
+    trajectories_energy.append(traj)
+    energy_labels.append(label)
+    
+    if len(traj) > 0:
+        min_r = np.min(traj.r)
+        final_r = traj.r[-1]
+        n_orbits = abs(traj.phi[-1] - traj.phi[0]) / (2*np.pi)
+        print(f"  {label}: min_r={min_r:.2f}M, final_r={final_r:.2f}M, orbits={n_orbits:.1f}")
+
+elapsed = time.time() - start_time
+print(f"✅ Simulation complete in {elapsed:.2f}s")
+
+# ============================================================================
+# Create Animation - FASTER
+# ============================================================================
+
+print("\nCreating animation (FAST: 2x speed, 350 frames)...")
+
+fig, ax = plt.subplots(figsize=(12, 12))
+ax.set_facecolor('#1a1a1a')
+fig.patch.set_facecolor('#1a1a1a')
+
+ax.set_xlim(-15, 15)
+ax.set_ylim(-15, 15)
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.2, color='gray')
+ax.set_xlabel('x (M)', fontsize=14, color='white', fontweight='bold')
+ax.set_ylabel('y (M)', fontsize=14, color='white', fontweight='bold')
+
+# Draw features
+horizon = Circle((0, 0), metric.r_s, color=HORIZON_COLOR, zorder=10)
+ax.add_patch(horizon)
+horizon_ring = Circle((0, 0), metric.r_s, fill=False,
+                      color=HORIZON_RING_COLOR, linewidth=2, zorder=11,
+                      label='Event Horizon (2M)')
+ax.add_patch(horizon_ring)
+
+isco = Circle((0, 0), metric.r_isco, fill=False,
+              color=ISCO_COLOR, linestyle='--', linewidth=2,
+              label='ISCO (6M)', zorder=9)
+ax.add_patch(isco)
+
+start_circle = Circle((0, 0), r0, fill=False, color='white',
+                      linestyle=':', linewidth=1, alpha=0.3, zorder=2)
+ax.add_patch(start_circle)
+
+# Color gradient
+colors_energy = plt.cm.plasma(np.linspace(0.1, 0.9, len(energies)))
+
+# Create line objects
+lines_energy = []
+points_energy = []
+for i, (traj, label) in enumerate(zip(trajectories_energy, energy_labels)):
+    if len(traj) > 0:
+        line, = ax.plot([], [], color=colors_energy[i], linewidth=2.5, 
+                       alpha=0.8, label=label, zorder=5)
+        point, = ax.plot([], [], 'o', color=colors_energy[i], 
+                        markersize=8, markeredgecolor='white',
+                        markeredgewidth=1.5, zorder=6)
+        lines_energy.append((line, traj))
+        points_energy.append((point, traj))
+
+ax.legend(loc='upper left', fontsize=10, framealpha=0.9, 
+         facecolor='#2a2a2a', edgecolor='white')
+
+title = ax.text(0.5, 1.02, '', transform=ax.transAxes,
+               ha='center', fontsize=16, fontweight='bold', color='white')
+
+# Info box
+info_text = f"r₀ = {r0}M\nb = {b}M\nE_circ = {E_circ:.4f}\n\nAll E < 1"
+info_text += f"\nτ_max = 2000M"
+info_box = ax.text(0.98, 0.98, info_text, transform=ax.transAxes,
+                  verticalalignment='top', horizontalalignment='right',
+                  fontsize=11, color='white',
+                  bbox=dict(boxstyle='round', facecolor='#2a2a2a', alpha=0.9,
+                           edgecolor='white', linewidth=1.5))
+
+# Animation functions
+def init():
+    for line, _ in lines_energy:
+        line.set_data([], [])
+    for point, _ in points_energy:
+        point.set_data([], [])
+    title.set_text('Energy Dependence (Fast & Long): τ = 0')
+    return [l for l, _ in lines_energy] + [p for p, _ in points_energy] + [title]
+
+def animate(frame):
+    # 🚀 2x FASTER: skip 6 points per frame (was 3)
+    for line, traj in lines_energy:
+        idx = min(frame * 10, len(traj) - 1)
+        line.set_data(traj.x[:idx], traj.y[:idx])
+    
+    for point, traj in points_energy:
+        idx = min(frame * 10, len(traj) - 1)
+        if idx < len(traj):
+            point.set_data([traj.x[idx]], [traj.y[idx]])
+    
+    if len(lines_energy) > 0:
+        max_idx = min(frame * 10, min(len(traj) for _, traj in lines_energy) - 1)
+        if max_idx >= 0 and max_idx < len(lines_energy[0][1].tau):
+            tau_val = lines_energy[0][1].tau[max_idx]
+            title.set_text(f'Energy Dependence (Fast & Long): τ = {tau_val:.1f}')
+    
+    return [l for l, _ in lines_energy] + [p for p, _ in points_energy] + [title]
+
+# More frames for longer video
+max_len = max([len(traj) for _, traj in lines_energy]) if lines_energy else 100
+n_frames = min(max_len // 10, 350)  # 🚀 More frames (was 250)
+
+print(f"Animation frames: {n_frames}")
+print(f"Frame skip: 6 (2x faster than before)")
+
+anim = FuncAnimation(fig, animate, init_func=init,
+                     frames=n_frames, interval=50, blit=True)
+
+# Save
+writer = PillowWriter(fps=20)
+output_file = './results/videos/video5_energy_dependence_fast_long.gif'
+print(f"\nSaving animation...")
+anim.save(output_file, writer=writer, dpi=80)
+plt.close()
+
+print(f"Saved: {output_file}")
