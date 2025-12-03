@@ -90,7 +90,7 @@ for i in range(n_massive):
     trajectories_mixed.append(('massive', traj))
 
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
+print(f"Complete in {elapsed:.2f}s")
 
 # Animate
 print("Creating animation...")
@@ -168,7 +168,7 @@ writer = PillowWriter(fps=20)
 anim1.save('./results/videos/video1_random_cloud_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video1_random_cloud_corrected.gif")
+print(f"Saved: results/videos/video1_random_cloud_corrected.gif")
 
 # ============================================================================
 # VIDEO 2: Parallel Photon Beam (Gravitational Lensing) - UNCHANGED
@@ -182,10 +182,11 @@ start_time = time.time()
 
 sim.clear()
 
+
 # Parallel beam from left side
 n_beam = 20
-y_positions = np.linspace(-15, 15, n_beam)  # Different impact parameters
-x_start = -30
+y_positions = np.linspace(-15, 0, n_beam)  # Different impact parameters
+x_start = -20
 
 trajectories_beam = []
 
@@ -204,9 +205,29 @@ for i, y0 in enumerate(y_positions):
         radial_direction="inward", label=f"beam_{i}"
     )
     trajectories_beam.append(traj)
+"""
+#Parallel beam from left side - CORRECTED
+n_beam = 20
+y_positions = np.linspace(-15, 15, n_beam)
+x_start = -50  # CHANGED: Start farther away
 
+trajectories_beam = []
+
+print("Simulating parallel beam (moving in +x direction)...")
+for i, y0 in enumerate(y_positions):
+    r0 = np.sqrt(x_start**2 + y0**2)
+    phi0 = np.arctan2(y0, x_start)
+    b = abs(y0)
+    
+    traj = sim.simulate(
+        r0=r0, phi0=phi0, impact_param=b,
+        is_timelike=False, E=1.0, tau_span=(0, 500),
+        radial_direction="auto",  #CHANGED: Proper parallel motion
+        label=f"beam_{i}"
+    )
+"""
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
+print(f"Complete in {elapsed:.2f}s")
 
 # Animate
 print("Creating animation...")
@@ -270,7 +291,7 @@ writer = PillowWriter(fps=20)
 anim2.save('./results/videos/video2_parallel_beam.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video2_parallel_beam.gif")
+print(f"Saved: results/videos/video2_parallel_beam.gif")
 
 # ============================================================================
 # VIDEO 3: Photons vs Massive Particles (Direct Comparison) - CORRECTED
@@ -311,7 +332,7 @@ for i, b in enumerate(impact_params_compare):
     trajectories_compare.append(('massive', traj_massive))
 
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
+print(f"Complete in {elapsed:.2f}s")
 
 # Animate
 print("Creating animation...")
@@ -386,7 +407,7 @@ writer = PillowWriter(fps=20)
 anim3.save('./results/videos/video3_comparison_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video3_comparison_corrected.gif")
+print(f"Saved: results/videos/video3_comparison_corrected.gif")
 
 # ============================================================================
 # VIDEO 4: Orbital Trajectories (Massive Particles Only) - CORRECTED
@@ -427,7 +448,7 @@ for i, r0 in enumerate(r_starts):
     trajectories_orbits.append(traj)
 
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
+print(f"Complete in {elapsed:.2f}s")
 
 # Animate
 print("Creating animation...")
@@ -493,30 +514,4 @@ writer = PillowWriter(fps=20)
 anim4.save('./results/videos/video4_orbits_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video4_orbits_corrected.gif")
-
-# ============================================================================
-# SUMMARY
-# ============================================================================
-
-print("\n" + "="*70)
-print("ALL VIDEOS COMPLETE WITH CORRECTED ENERGIES!")
-print("="*70)
-
-print("\n📁 Generated Videos:")
-print("  1. video1_random_cloud_corrected.gif     - Mixed (E=auto for massive)")
-print("  2. video2_parallel_beam.gif              - Photons only (unchanged)")
-print("  3. video3_comparison_corrected.gif       - Direct comparison (E=auto)")
-print("  4. video4_orbits_corrected.gif           - Orbits (E=0.96*E_circ)")
-
-print("\n🔧 KEY CORRECTIONS:")
-print("  ❌ Before: E=1.0 or E=1.1 for massive particles")
-print("  ✅ After:  E=None (auto) or E=0.95*E_circular")
-print("")
-print("  Result: Massive particles now behave physically!")
-print("  - No unphysical escape from bound orbits")
-print("  - Proper capture dynamics")
-print("  - Correct inspiral behavior")
-
-print("\n✅ All animations saved in results/videos/")
-print("="*70 + "\n")
+print(f"Saved: results/videos/video4_orbits_corrected.gif")
