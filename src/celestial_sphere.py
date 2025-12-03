@@ -170,7 +170,7 @@ def create_celestial_map(metric, observer_r=10.0, n_rays=30):
             fontsize=12, verticalalignment='top',
             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
     
-    print(f"✅ Ray tracing complete!")
+    print(f"Ray tracing complete!")
     
     return fig, ax
 
@@ -341,5 +341,5 @@ if __name__ == "__main__":
     # Create comparison plot
     fig, axes = compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=30)
     plt.savefig('black_hole_shadows.png', dpi=300, bbox_inches='tight')
-    print("\n✅ Saved: black_hole_shadows.png")
+    print("\nSaved: black_hole_shadows.png")
     plt.show()
