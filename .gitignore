@@ -220,3 +220,8 @@ __marimo__/
 *.h5
 *.npy
 *.csv
+
+# But include specific GIFs used in README
+!results/videos/video7_critical_orbits.gif
+!results/videos/kerr_moderate_scatter.gif
+!results/videos/video5_energy_dependence_fast_long.gif
