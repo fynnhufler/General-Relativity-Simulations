@@ -89,7 +89,7 @@ for i, b in enumerate(impact_params):
             critical_indices.append(i)
 
 print(f"Captured: {len(captured_indices)}, Escaped: {len(escaped_indices)}")
-print(f"✅ Complete in {time.time() - start_time:.2f}s")
+print(f" Complete in {time.time() - start_time:.2f}s")
 
 # Create figure
 print("Creating plot...")
@@ -201,7 +201,7 @@ plt.savefig('./results/plots/plot1_null_geodesics.png',
             dpi=200, facecolor='#1a1a1a', bbox_inches='tight')
 plt.close()
 
-print(f"💾 Saved: results/plots/plot1_null_geodesics.png")
+print(f" Saved: results/plots/plot1_null_geodesics.png")
 
 # ============================================================================
 # PLOT 2: Timelike Geodesics - Energy Dependence
@@ -333,7 +333,7 @@ plt.savefig('./results/plots/plot2_timelike_energy.png',
             dpi=200, facecolor='#1a1a1a', bbox_inches='tight')
 plt.close()
 
-print(f"💾 Saved: results/plots/plot2_timelike_energy.png")
+print(f" Saved: results/plots/plot2_timelike_energy.png")
 
 # ============================================================================
 # PLOT 3: Impact Parameter Phase Space
@@ -384,7 +384,7 @@ for i, b in enumerate(b_values):
     if (i+1) % 20 == 0:
         print(f"  Progress: {i+1}/{len(b_values)}")
 
-print(f"✅ Complete in {time.time() - start_time:.2f}s")
+print(f" Complete in {time.time() - start_time:.2f}s")
 
 # Create figure with subplots
 print("Creating plot...")
@@ -446,7 +446,7 @@ plt.savefig('./results/plots/plot3_phase_space.png',
             dpi=200, facecolor='#1a1a1a', bbox_inches='tight')
 plt.close()
 
-print(f"💾 Saved: results/plots/plot3_phase_space.png")
+print(f" Saved: results/plots/plot3_phase_space.png")
 
 # ============================================================================
 # PLOT 4: Effective Potential Visualization

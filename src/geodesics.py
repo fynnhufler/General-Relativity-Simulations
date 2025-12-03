@@ -3,8 +3,6 @@ Geodesic Simulator for Black Holes
 ===================================
 Simulates timelike (massive particles) and null (photons) geodesics
 around Schwarzschild and Kerr black holes.
-
-FIXED VERSION - Proper tangential initial conditions and impact parameter physics
 """
 
 import numpy as np
@@ -135,9 +133,9 @@ class SchwarzschildMetric(Metric):
         The impact parameter b = L/E relates them.
         
         Critical values for photons:
-        - b > √27 M ≈ 5.196 M: photon escapes
-        - b < √27 M: photon is captured
-        - b = √27 M: photon orbits at r = 3M (photon sphere)
+        - b > sqrt(27) M ≈ 5.196 M: photon escapes
+        - b < sqrt(27) M: photon is captured
+        - b = sqrt(27) M: photon orbits at r = 3M (photon sphere)
         
         Parameters:
         -----------
@@ -163,7 +161,7 @@ class SchwarzschildMetric(Metric):
         # Set angular momentum from impact parameter
         L = impact_param * E
         
-        # Angular velocity dφ/dτ
+        # Angular velocity dphi/dtau
         dphi_dtau = L / r0**2
         
         if not is_timelike:
@@ -173,23 +171,23 @@ class SchwarzschildMetric(Metric):
             # From constraint: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = 0
             
             if radial_direction == "tangent":
-                # Tangential start: dr/dτ ≈ 0 (very small)
-                # For truly tangential motion at r₀, the impact parameter is fixed:
-                # b_tangential = r₀ / √(1 - 2M/r₀)
+                # Tangential start: dr/dtau ≈ 0 (very small)
+                # For truly tangential motion at r0, the impact parameter is fixed:
+                # b_tangential = r0 / sqrt(1 - 2M/r0)
                 # If user specifies different b, we add small radial velocity
                 
                 # First: compute what b would be for EXACTLY tangential
                 b_exact_tangential = r0 / np.sqrt(f) if f > 0 else impact_param
                 
-                # Set dt/dτ from energy
+                # Set dt/dtau from energy
                 dt_dtau = E / f
                 
-                # Compute dr/dτ from null constraint
-                # (dr/dτ)² = E² - f·L²/r² 
+                # Compute dr/dtau from null constraint
+                # (dr/dtau)² = E² - f*L²/r² 
                 dr_dtau_sq = E**2 - f * L**2 / r0**2
                 
                 if abs(impact_param - b_exact_tangential) / b_exact_tangential < 0.01:
-                    # Close enough to tangential - set dr/dτ = 0
+                    # Close enough to tangential - set dr/dtau = 0
                     dr_dtau = 0.0
                 elif dr_dtau_sq >= 0:
                     # Need radial motion to achieve desired impact parameter
@@ -201,16 +199,16 @@ class SchwarzschildMetric(Metric):
                         # Smaller b means photon should move inward initially  
                         dr_dtau = -np.sqrt(dr_dtau_sq)
                 else:
-                    # dr²/dτ² < 0: at turning point
+                    # dr²/dtau² < 0: at turning point
                     dr_dtau = 0.0
                 
             elif radial_direction == "inward":
                 # Inward motion with proper null constraint
-                # We need: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = 0
-                # Solve for dr/dτ given E and L
+                # We need: -f(dt/dtau)² + (1/f)(dr/dtau)² + r²(dphi/dtau)² = 0
+                # Solve for dr/dtau given E and L
                 
-                # From E = f·dt/dτ and null constraint:
-                # (dr/dτ)² = E² - f·L²/r²
+                # From E = f*dt/dtau and null constraint:
+                # (dr/dtau)² = E² - f*L²/r²
                 dr_dtau_sq = E**2 - f * L**2 / r0**2
                 
                 if dr_dtau_sq >= 0:
@@ -260,20 +258,20 @@ class SchwarzschildMetric(Metric):
             # ============================================================
             # TIMELIKE GEODESIC (MASSIVE PARTICLE)
             # ============================================================
-            # From constraint: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = -1
+            # From constraint: -f(dt/dtau)² + (1/f)(dr/dtau)² + r²(dphi/dtau)² = -1
             
             if radial_direction == "tangent":
-                # Tangential start: dr/dτ = 0
-                # For dr/dτ = 0: -f(dt/dτ)² + r²(dφ/dτ)² = -1
-                # → f(dt/dτ)² = 1 + r²(dφ/dτ)²
-                # → dt/dτ = √[(1 + r²(dφ/dτ)²) / f]
+                # Tangential start: dr/dtau = 0
+                # For dr/dtau = 0: -f(dt/dtau)² + r²(dphi/dtau)² = -1
+                # → f(dt/dtau)² = 1 + r²(dphi/dtau)²
+                # → dt/dtau = sqrt[(1 + r²(dphi/dtau)²) / f]
                 
                 dr_dtau = 0.0
                 dt_dtau = np.sqrt((1 + r0**2 * dphi_dtau**2) / f) if f > 0 else E / f
                 
             elif radial_direction == "inward":
                 # Inward motion
-                # (dr/dτ)² = E² - (1 + L²/r²)f
+                # (dr/dtau)² = E² - (1 + L²/r²)f
                 dr_dtau_sq = E**2 - (1 + L**2 / r0**2) * f
                 
                 if dr_dtau_sq >= 0:
@@ -353,9 +351,9 @@ class KerrMetric(Metric):
     
     def metric_functions(self, r: float):
         """
-        Compute Kerr metric auxiliary functions at θ = π/2 (equatorial).
+        Compute Kerr metric auxiliary functions at theta = pi/2 (equatorial).
         
-        Returns: Σ, Δ, A
+        Returns: \Sigma, \Delta, A
         """
         # At θ = π/2: cos(θ) = 0, sin(θ) = 1
         Sigma = r**2  # r² + a²cos²(π/2) = r²
@@ -367,7 +365,7 @@ class KerrMetric(Metric):
     def geodesic_equations(self, tau: float, state: np.ndarray, 
                           is_timelike: bool = False) -> np.ndarray:
         """
-        Kerr geodesic equations in equatorial plane (θ = π/2).
+        Kerr geodesic equations in equatorial plane (theta = pi/2).
         
         SIMPLIFIED: For a=0, this must reduce exactly to Schwarzschild.
         For a>0, we add frame-dragging corrections.
@@ -384,11 +382,10 @@ class KerrMetric(Metric):
         a = self.a
         
         # Metric functions
-        Sigma = r**2  # + a²cos²θ, but θ=π/2 so cos θ = 0
+        Sigma = r**2  # + a^2cos^2(theta), but theta=pi/2 so cos(theta) = 0
         Delta = r**2 - 2*M*r + a**2
         
         # For a=0, this must give Schwarzschild!
-        # Let's use that as our guide.
         
         if abs(a) < 1e-10:
             # Pure Schwarzschild limit
@@ -397,7 +394,7 @@ class KerrMetric(Metric):
             d2t = -2 * (M / (r**2 * f)) * ut * ur
             d2r = (-M * f / r**2 * ut**2 
                    + M / (r**2 * f) * ur**2 
-                   + (r - 2*M) * uphi**2)  # POSITIVE centrifugal!
+                   + (r - 2*M) * uphi**2) 
             d2phi = -2 / r * ur * uphi
         else:
             # Kerr with spin
@@ -410,13 +407,13 @@ class KerrMetric(Metric):
             d2t = -2 * Gamma_t_tr * ut * ur - 2 * Gamma_t_rphi * ur * uphi
             
             # Radial equation (critical!)
-            # Γ^r_tt, Γ^r_rr, Γ^r_φφ, Γ^r_tφ
+            # Gamma^r_tt, Gamma^r_rr, Gamma^r_phiphi, Gamma^r_tphi
             Gamma_r_tt = M*Delta*(r**2 - a**2) / Sigma**3
             Gamma_r_rr = (M*r**2 - M*a**2 - r*Delta) / (Sigma * Delta)
-            Gamma_r_pp = -Delta*r / Sigma  # Note the NEGATIVE!
+            Gamma_r_pp = -Delta*r / Sigma 
             Gamma_r_tp = 2*a*M**2*r / Sigma**3
             
-            # The geodesic equation: d²r/dτ² = -Γ^r_μν u^μ u^ν
+            # The geodesic equation: d²r/dtau² = -Gamma^r_munu u^mu u^nu
             d2r = (-Gamma_r_tt * ut**2
                    - Gamma_r_rr * ur**2
                    - Gamma_r_pp * uphi**2      # -(-Delta*r/Sigma) = +Delta*r/Sigma
@@ -483,15 +480,15 @@ class KerrMetric(Metric):
                 
             elif radial_direction == "inward":
                 # For Kerr, the relation between E, L and velocities involves solving:
-                # E = -(g_tt u^t + g_tφ u^φ)
-                # L = g_φφ u^φ + g_tφ u^t
+                # E = -(g_tt u^t + g_tphi u^phi)
+                # L = g_phiphi u^phi + g_tphi u^t
                 
-                # From these two equations, solve for u^t and u^φ in terms of E, L:
+                # From these two equations, solve for u^t and u^phi in terms of E, L:
                 # This gives (at equator):
                 det_metric = g_tt * g_phiphi - g_tphi**2
                 
-                # u^t = (g_tφ L - g_φφ E) / det
-                # u^φ = (g_tφ E - g_tt L) / det
+                # u^t = (g_tphi L - g_phiphi E) / det
+                # u^phi = (g_tphi E - g_tt L) / det
                 
                 ut_from_EL = (g_tphi * L - g_phiphi * E) / det_metric
                 uphi_from_EL = (g_tphi * E - g_tt * L) / det_metric
@@ -500,7 +497,7 @@ class KerrMetric(Metric):
                 # Note: dphi_dtau should equal uphi_from_EL, let's check
                 dphi_dtau = uphi_from_EL  # Override with correct value
                 
-                # Now get dr/dτ from null constraint
+                #dr/dtau from null constraint
                 dr_dtau_sq = (-g_tt * dt_dtau**2 - 2*g_tphi * dt_dtau * dphi_dtau 
                              - g_phiphi * dphi_dtau**2) / g_rr
                 if dr_dtau_sq >= 0:
@@ -551,9 +548,9 @@ class KerrMetric(Metric):
             g_phiphi = A/Sigma
             
             if radial_direction == "tangent":
-                # Tangential: dr/dτ = 0
-                # -1 = g_tt(dt/dτ)² + 2g_tφ(dt/dτ)(dφ/dτ) + g_φφ(dφ/dτ)²
-                # Quadratic in dt/dτ
+                # Tangential: dr/dtau = 0
+                # -1 = g_tt(dt/dtau)² + 2g_tphi(dt/dtau)(dphi/dtau) + g_phiphi(dphi/dtau)²
+                # Quadratic in dt/dtau
                 
                 a_coef = g_tt
                 b_coef = 2 * g_tphi * dphi_dtau
@@ -865,96 +862,3 @@ class GeodesicSimulation:
     def clear(self):
         """Clear all stored trajectories."""
         self.trajectories = []
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-"""
-if __name__ == "__main__":
-    print("\n" + "="*70)
-    print("GEODESIC SIMULATOR - FIXED VERSION")
-    print("="*70)
-    
-    # Create Schwarzschild metric
-    metric = SchwarzschildMetric(mass=1.0)
-    sim = GeodesicSimulation(metric)
-    
-    print(f"\nSchwarschild Black Hole Parameters:")
-    print(f"  Mass: M = {metric.M}")
-    print(f"  Schwarzschild radius: r_s = {metric.r_s} M")
-    print(f"  Photon sphere: r_photon = {metric.r_photon} M")
-    print(f"  Critical impact parameter (photons): b_crit = {metric.b_crit_photon:.3f} M")
-    
-    # ========================================================================
-    # Example 1: Photons coming from far away (inward motion)
-    # ========================================================================
-    print("\n" + "="*70)
-    print("EXAMPLE 1: Photons from infinity (inward motion)")
-    print("="*70)
-    
-    # Simulate photon bundle with different impact parameters
-    # Photons coming from far away (inward motion)
-    b_crit = metric.b_crit_photon
-    impact_params = np.array([
-        b_crit * 0.7,   # Should be captured
-        b_crit * 0.85,  # Should be captured
-        b_crit * 0.95,  # Should be captured
-        b_crit * 1.0,   # Critical - barely escapes or orbits
-        b_crit * 1.05,  # Should escape
-        b_crit * 1.15,  # Should escape
-        b_crit * 1.3,   # Should escape
-    ])
-    
-    trajectories = sim.simulate_bundle(
-        r0=15.0,
-        impact_params=impact_params,
-        is_timelike=False,
-        tau_span=(0, 150),
-        radial_direction="inward"  # Photons from infinity
-    )
-    
-    # ========================================================================
-    # Example 2: Photons starting tangentially at different radii
-    # ========================================================================
-    print("\n" + "="*70)
-    print("EXAMPLE 2: Tangential photons at various radii")
-    print("="*70)
-    
-    sim.clear()
-    
-    # For tangential photons at radius r, the effective impact parameter is:
-    # b_eff(r) = r / √(1 - 2M/r)
-    # We'll place photons at different radii to see different behaviors
-    
-    radii = np.array([4.0, 5.0, 6.0, 8.0, 10.0])
-    
-    for r0 in radii:
-        # Compute the effective impact parameter for tangential orbit at this radius
-        f = metric.metric_factor(r0)
-        b_eff = r0 / np.sqrt(f) if f > 0 else 0
-        
-        # Use this as the impact parameter
-        traj = sim.simulate(
-            r0=r0,
-            phi0=0.0,
-            impact_param=b_eff,
-            is_timelike=False,
-            tau_span=(0, 100),
-            radial_direction="tangent",
-            label=f"r₀={r0:.1f}M (b={b_eff:.2f}M)"
-        )
-        
-        if len(traj) > 0:
-            if traj.r[-1] > 50:
-                fate = "escaped"
-            elif traj.r[-1] < metric.r_s * 2:
-                fate = "captured"
-            else:
-                fate = "orbiting"
-                
-            print(f"  r₀={r0:4.1f}M, b_eff={b_eff:5.2f}M → {fate:10s} (points: {len(traj)})")
-    
-    print("\nSimulation complete! Use plotting code to visualize results.")
-    print(f"Total trajectories: {len(trajectories)}")
-"""

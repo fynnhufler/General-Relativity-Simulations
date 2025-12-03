@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script to verify the geodesic simulator fix
-Tests that photons with b > b_crit escape and b < b_crit are captured
+test script to verify the geodesic simulator fix
+tests that photons with b > b_crit escape and b < b_crit are captured
 """
 
 import numpy as np
@@ -160,8 +160,7 @@ def test_null_constraint():
         print("Trajectory too short for testing")
         return False
     
-    # Check null constraint: g_μν u^μ u^ν = 0
-    # In Schwarzschild: -f(dt/dτ)² + (1/f)(dr/dτ)² + r²(dφ/dτ)² = 0
+    # Check null constraint
     
     constraints = []
     for i in range(len(traj)):
@@ -180,8 +179,8 @@ def test_null_constraint():
     mean_violation = np.mean(np.abs(constraints))
     
     print(f"\nNull constraint statistics:")
-    print(f"  Max |g_μν u^μ u^ν| = {max_violation:.10e}")
-    print(f"  Mean |g_μν u^μ u^ν| = {mean_violation:.10e}")
+    print(f"  Max |g_munu u^mu u^nu| = {max_violation:.10e}")
+    print(f"  Mean |g_munu u^mu u^nu| = {mean_violation:.10e}")
     
     # Check if constraint is satisfied
     tolerance = 1e-8

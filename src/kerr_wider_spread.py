@@ -116,7 +116,7 @@ for spin, description, filename in spin_configs:
                 print(f"  Photon {i+1}/50: b={b:.2f}M, φ={np.degrees(phi0):.1f}°, {fate}")
     
     elapsed = time.time() - start_time
-    print(f"✅ Simulation complete in {elapsed:.2f}s")
+    print(f"Simulation complete in {elapsed:.2f}s")
     print(f"   Generated {len(trajectories)} trajectories")
     
     # ========================================================================

@@ -34,12 +34,12 @@ ISCO_COLOR = '#00FF00'  # Green for ISCO
 metric = SchwarzschildMetric(mass=1.0)
 
 print("\n" + "="*70)
-print("ADVANCED SCHWARZSCHILD ANIMATIONS - CORRECTED ENERGIES")
+print("ADVANCED SCHWARZSCHILD ANIMATIONS")
 print("Multiple Scenarios | Photons + Massive Particles")
 print("="*70)
 
 # ============================================================================
-# VIDEO 1: Random Particle Cloud (Mixed) - CORRECTED
+# VIDEO 1: Random Particle Cloud (Mixed)
 # ============================================================================
 
 print("\n" + "="*70)
@@ -73,7 +73,7 @@ for i in range(n_photons):
     trajectories_mixed.append(('photon', traj))
 
 # Random massive particles with CORRECT energies
-print("Simulating massive particles with correct energies...")
+print("Simulating massive particles...")
 for i in range(n_massive):
     r0 = np.random.uniform(10, 25)
     phi0 = np.random.uniform(0, 2*np.pi)
@@ -83,7 +83,7 @@ for i in range(n_massive):
     # AUTO-CALCULATE correct energy (E = 0.95 * E_circular)
     traj = sim.simulate(
         r0=r0, phi0=phi0, impact_param=b,
-        is_timelike=True, E=None,  # AUTO: correct energy!
+        is_timelike=True, E=None,  # auto
         tau_span=(0, 500),
         radial_direction=direction, label=f"massive_{i}"
     )
@@ -294,7 +294,7 @@ plt.close()
 print(f"Saved: results/videos/video2_parallel_beam.gif")
 
 # ============================================================================
-# VIDEO 3: Photons vs Massive Particles (Direct Comparison) - CORRECTED
+# VIDEO 3: Photons vs Massive Particles
 # ============================================================================
 
 print("\n" + "="*70)
@@ -410,7 +410,7 @@ plt.close()
 print(f"Saved: results/videos/video3_comparison_corrected.gif")
 
 # ============================================================================
-# VIDEO 4: Orbital Trajectories (Massive Particles Only) - CORRECTED
+# VIDEO 4: Orbital Trajectories (Massive Particles Only)
 # ============================================================================
 
 print("\n" + "="*70)
@@ -425,9 +425,9 @@ sim.clear()
 n_orbits = 12
 trajectories_orbits = []
 
-print("Simulating orbital trajectories with correct energies...")
+print("Simulating orbital trajectories...")
 
-# Start at various radii, all OUTSIDE ISCO
+# Start at various radii, all outside ISCO
 r_starts = np.linspace(7.0, 15.0, n_orbits)
 
 for i, r0 in enumerate(r_starts):
@@ -436,7 +436,7 @@ for i, r0 in enumerate(r_starts):
     L_circ = np.sqrt(r0**3 / (r0 - 3))
     b_circ = L_circ / E_circ
     
-    # Use slightly sub-circular for slow inspiral
+    #slightly sub-circular for slow inspiral
     E = E_circ * 0.96
     b = b_circ * 0.96
     
@@ -517,7 +517,7 @@ plt.close()
 print(f"Saved: results/videos/video4_orbits_corrected.gif")
 
 # ============================================================================
-# VIDEO 5: Energy Dependence (NEW!)
+# VIDEO 5: Energy Dependence
 # ============================================================================
 
 print("\n" + "="*70)
@@ -664,11 +664,11 @@ print(f"Saved: results/videos/video5_energy_dependence.gif")
 metric = SchwarzschildMetric(mass=1.0)
 
 print("\n" + "="*70)
-print("VIDEO 5: Energy Dependence - FAST & LONG")
+print("VIDEO 5: Energy Dependence")
 print("="*70)
 
 # ============================================================================
-# Simulate Trajectories - LONGER
+# Simulate Trajectories
 # ============================================================================
 
 print("\nSimulating trajectories...")
@@ -695,13 +695,13 @@ energy_labels = []
 print(f"Starting radius: r0 = {r0}M")
 print(f"Impact parameter: b = {b}M")
 print(f"Circular energy: E_circ = {E_circ:.4f}")
-print(f"\nSimulating {len(energies)} trajectories (LONG: τ=2000M)...")
+print(f"\nSimulating {len(energies)} trajectories (long: τ=2000M)...")
 
 for E, label in energies:
     traj = sim.simulate(
         r0=r0, phi0=0, impact_param=b,
         is_timelike=True, E=E, 
-        tau_span=(0, 2000),  # 🚀 2.5x LONGER (was 800)
+        tau_span=(0, 2000),  # 2.5x longer
         radial_direction="inward", label=label
     )
     trajectories_energy.append(traj)
@@ -714,10 +714,10 @@ for E, label in energies:
         print(f"  {label}: min_r={min_r:.2f}M, final_r={final_r:.2f}M, orbits={n_orbits:.1f}")
 
 elapsed = time.time() - start_time
-print(f"✅ Simulation complete in {elapsed:.2f}s")
+print(f" Simulation complete in {elapsed:.2f}s")
 
 # ============================================================================
-# Create Animation - FASTER
+# Create Animation
 # ============================================================================
 
 print("\nCreating animation (FAST: 2x speed, 350 frames)...")
@@ -791,7 +791,7 @@ def init():
     return [l for l, _ in lines_energy] + [p for p, _ in points_energy] + [title]
 
 def animate(frame):
-    # 🚀 2x FASTER: skip 6 points per frame (was 3)
+    # skip 6 points per frame
     for line, traj in lines_energy:
         idx = min(frame * 10, len(traj) - 1)
         line.set_data(traj.x[:idx], traj.y[:idx])
@@ -811,7 +811,7 @@ def animate(frame):
 
 # More frames for longer video
 max_len = max([len(traj) for _, traj in lines_energy]) if lines_energy else 100
-n_frames = min(max_len // 10, 350)  # 🚀 More frames (was 250)
+n_frames = min(max_len // 10, 350)  # more frames
 
 print(f"Animation frames: {n_frames}")
 print(f"Frame skip: 6 (2x faster than before)")
