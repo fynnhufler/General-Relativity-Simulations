@@ -3,8 +3,6 @@ Geodesic Simulator for Black Holes
 ===================================
 Simulates timelike (massive particles) and null (photons) geodesics
 around Schwarzschild and Kerr black holes.
-
-FIXED VERSION - Proper tangential initial conditions and impact parameter physics
 """
 
 import numpy as np
@@ -864,96 +862,3 @@ class GeodesicSimulation:
     def clear(self):
         """Clear all stored trajectories."""
         self.trajectories = []
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-"""
-if __name__ == "__main__":
-    print("\n" + "="*70)
-    print("GEODESIC SIMULATOR - FIXED VERSION")
-    print("="*70)
-    
-    # Create Schwarzschild metric
-    metric = SchwarzschildMetric(mass=1.0)
-    sim = GeodesicSimulation(metric)
-    
-    print(f"\nSchwarschild Black Hole Parameters:")
-    print(f"  Mass: M = {metric.M}")
-    print(f"  Schwarzschild radius: r_s = {metric.r_s} M")
-    print(f"  Photon sphere: r_photon = {metric.r_photon} M")
-    print(f"  Critical impact parameter (photons): b_crit = {metric.b_crit_photon:.3f} M")
-    
-    # ========================================================================
-    # Example 1: Photons coming from far away (inward motion)
-    # ========================================================================
-    print("\n" + "="*70)
-    print("EXAMPLE 1: Photons from infinity (inward motion)")
-    print("="*70)
-    
-    # Simulate photon bundle with different impact parameters
-    # Photons coming from far away (inward motion)
-    b_crit = metric.b_crit_photon
-    impact_params = np.array([
-        b_crit * 0.7,   # Should be captured
-        b_crit * 0.85,  # Should be captured
-        b_crit * 0.95,  # Should be captured
-        b_crit * 1.0,   # Critical - barely escapes or orbits
-        b_crit * 1.05,  # Should escape
-        b_crit * 1.15,  # Should escape
-        b_crit * 1.3,   # Should escape
-    ])
-    
-    trajectories = sim.simulate_bundle(
-        r0=15.0,
-        impact_params=impact_params,
-        is_timelike=False,
-        tau_span=(0, 150),
-        radial_direction="inward"  # Photons from infinity
-    )
-    
-    # ========================================================================
-    # Example 2: Photons starting tangentially at different radii
-    # ========================================================================
-    print("\n" + "="*70)
-    print("EXAMPLE 2: Tangential photons at various radii")
-    print("="*70)
-    
-    sim.clear()
-    
-    # For tangential photons at radius r, the effective impact parameter is:
-    # b_eff(r) = r / √(1 - 2M/r)
-    # We'll place photons at different radii to see different behaviors
-    
-    radii = np.array([4.0, 5.0, 6.0, 8.0, 10.0])
-    
-    for r0 in radii:
-        # Compute the effective impact parameter for tangential orbit at this radius
-        f = metric.metric_factor(r0)
-        b_eff = r0 / np.sqrt(f) if f > 0 else 0
-        
-        # Use this as the impact parameter
-        traj = sim.simulate(
-            r0=r0,
-            phi0=0.0,
-            impact_param=b_eff,
-            is_timelike=False,
-            tau_span=(0, 100),
-            radial_direction="tangent",
-            label=f"r₀={r0:.1f}M (b={b_eff:.2f}M)"
-        )
-        
-        if len(traj) > 0:
-            if traj.r[-1] > 50:
-                fate = "escaped"
-            elif traj.r[-1] < metric.r_s * 2:
-                fate = "captured"
-            else:
-                fate = "orbiting"
-                
-            print(f"  r₀={r0:4.1f}M, b_eff={b_eff:5.2f}M → {fate:10s} (points: {len(traj)})")
-    
-    print("\nSimulation complete! Use plotting code to visualize results.")
-    print(f"Total trajectories: {len(trajectories)}")
-"""
