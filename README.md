@@ -8,7 +8,7 @@ A high-performance Python simulator for computing and visualizing particle traje
 
 
 ### Schwarzschild Black Hole - Photon Trajectories
-![Schwarzschild Null Geodesics](/results/videos/video7_critical_orbits.gif)
+![Schwarzschild Null Geodesics](results/videos/video7_critical_orbits.gif)
 
 ### Kerr Black Hole - Frame Dragging Effect
 ![Kerr Frame Dragging](results/videos/kerr_moderate_scatter.gif)
