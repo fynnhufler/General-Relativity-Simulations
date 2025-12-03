@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
 Additional Creative Animations - CORRECTED ENERGIES
-====================================================
-Even more interesting scenarios with PROPER PHYSICS
 """
 
 import sys
@@ -78,7 +76,7 @@ for i, angle in enumerate(angles):
         trajectories_spray.append(('massive', traj))
 
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
+print(f"Complete in {elapsed:.2f}s")
 
 # Animate
 print("Creating animation...")
@@ -155,7 +153,7 @@ writer = PillowWriter(fps=20)
 anim5.save('./results/videos/video5_particle_spray_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video5_particle_spray_corrected.gif")
+print(f"Saved: results/videos/video5_particle_spray_corrected.gif")
 
 # ============================================================================
 # VIDEO 6: Accretion Disk Simulation - CORRECTED
@@ -377,25 +375,4 @@ writer = PillowWriter(fps=20)
 anim7.save('./results/videos/video7_critical_orbits.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video7_critical_orbits.gif")
-
-# ============================================================================
-# SUMMARY
-# ============================================================================
-
-print("\n" + "="*70)
-print("ADDITIONAL VIDEOS COMPLETE WITH CORRECTED ENERGIES!")
-print("="*70)
-
-print("\n📁 New Videos:")
-print("  5. video5_particle_spray_corrected.gif    - Radial explosion (E=auto)")
-print("  6. video6_accretion_disk_corrected.gif    - Spiraling accretion (E=0.92-0.98*E_circ)")
-print("  7. video7_critical_orbits.gif             - Unstable photon sphere (unchanged)")
-
-print("\n🔧 KEY CORRECTIONS:")
-print("  Video 5: Massive particles now use E=None (auto-calculated)")
-print("  Video 6: Energies 92-98% of circular (proper slow inspiral)")
-print("  Video 7: Unchanged (photons only, E=1 is correct)")
-
-print("\n✅ All additional animations saved")
-print("="*70 + "\n")
+print(f"Saved: results/videos/video7_critical_orbits.gif")
