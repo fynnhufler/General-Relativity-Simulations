@@ -29,8 +29,6 @@ A high-performance Python simulator for computing and visualizing particle traje
 - [API Reference](#api-reference)
 - [Project Structure](#project-structure)
 - [Performance](#performance)
-- [Future Work](#future-work)
-- [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
@@ -544,49 +542,6 @@ with Pool(processes=4) as pool:
 ```
 
 ---
-
-## Future Work
-
-### Planned Features
-
-- [ ] **Testing suite**: Unit tests for conservation laws and known solutions
-- [ ] **Example scripts**: Ready-to-run examples for common scenarios
-- [ ] **Visualization tools**: Automated plotting and animation generation
-- [ ] **Off-equatorial motion**: Extend to full 3D geodesics with θ-motion
-- [ ] **Additional metrics**: Reissner-Nordström (charged) black holes
-- [ ] **Performance optimization**: GPU acceleration and parallel processing
-- [ ] **Interactive visualization**: Web-based interface for real-time exploration
-
-### Validation Approach
-
-The current implementation has been validated through:
-
-1. **Newtonian limit**: At large distances ($r \gg M$), trajectories match Newtonian predictions
-2. **Circular orbits**: Stable circular orbits verified at expected radii
-3. **Conservation laws**: Energy and angular momentum conserved to ~10⁻⁹ relative error throughout integration
-4. **Known solutions**: Photon sphere orbits ($r = 3M$) reproduced accurately
-5. **Kerr → Schwarzschild**: With $a = 0$, Kerr results match Schwarzschild exactly
-6. **Physical reasonableness**: All trajectories behave as expected (capture vs. escape based on impact parameter)
-
----
-
-## Contributing
-
-Contributions are welcome! This is an academic project that could benefit from:
-
-**High Priority:**
-- [ ] Example scripts demonstrating common use cases
-- [ ] Visualization and animation utilities
-- [ ] Test suite for numerical accuracy validation
-- [ ] Documentation improvements
-
-**Future Enhancements:**
-- [ ] Off-equatorial geodesics (full 3D motion with θ)
-- [ ] Reissner-Nordström metric (charged black holes)
-- [ ] Gravitational wave perturbations
-- [ ] GPU acceleration with CUDA/OpenCL
-- [ ] Interactive web visualization
-- [ ] Symplectic integrators for improved long-term stability
 
 ### Getting Started
 
