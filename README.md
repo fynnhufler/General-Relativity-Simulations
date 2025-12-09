@@ -578,9 +578,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact
 
 **Author**: Fynn Hufler  
-**Affiliation**: MSc Physics, Exchange Student from ETH Zurich at the University of Texas at Austin
-**Date**: December 3rd, 2025  
-**Email**: [fhufler@ethz.ch]  
+**Affiliation**: MSc Physics, ETH Zurich (Exchange Student, UT Austin)  
+**Date**: December 9, 2025  
+**Email**: fhufler@ethz.ch  
 **GitHub**: [@fynnhufler](https://github.com/fynnhufler)
+
 
 ---
