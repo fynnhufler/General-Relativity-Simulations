@@ -564,7 +564,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - **Course**: PHY 387M – Relativity Theory 1, University of Texas at Austin
-- **Instructor**: [Instructor Name]
+- **Instructor**: [Deirdre Shoemaker]
 - **References**:
   - Bardeen, J. M., Press, W. H., & Teukolsky, S. A. (1972). "Rotating Black Holes: Locally Nonrotating Frames, Energy Extraction, and Scalar Synchrotron Radiation." *The Astrophysical Journal*, 178, 347.
   - Misner, C. W., Thorne, K. S., & Wheeler, J. A. (1973). *Gravitation*. W. H. Freeman.
@@ -578,10 +578,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact
 
 **Author**: Fynn Hufler  
-**Affiliation**: MSc Physics, University of Texas at Austin  
+**Affiliation**: MSc Physics, Exchange Student from ETH Zurich at the University of Texas at Austin
 **Date**: December 3rd, 2025  
 **Email**: [fhufler@ethz.ch]  
-**GitHub**: [@yourusername](https://github.com/fynnhufler)
+**GitHub**: [@fynnhufler](https://github.com/fynnhufler)
 
 ---
 
