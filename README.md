@@ -564,7 +564,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - **Course**: PHY 387M – Relativity Theory 1, University of Texas at Austin
-- **Instructor**: [Deirdre Shoemaker]
+- **Instructor**: Professor Deirdre Shoemaker
 - **References**:
   - Bardeen, J. M., Press, W. H., & Teukolsky, S. A. (1972). "Rotating Black Holes: Locally Nonrotating Frames, Energy Extraction, and Scalar Synchrotron Radiation." *The Astrophysical Journal*, 178, 347.
   - Misner, C. W., Thorne, K. S., & Wheeler, J. A. (1973). *Gravitation*. W. H. Freeman.
@@ -582,21 +582,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Date**: December 3rd, 2025  
 **Email**: [fhufler@ethz.ch]  
 **GitHub**: [@fynnhufler](https://github.com/fynnhufler)
-
----
-
-## Citation
-
-If you use this code in your research, please cite:
-
-```bibtex
-@software{hufler2025blackhole,
-  author = {Hufler, Fynn},
-  title = {Black Hole Geodesic Simulator},
-  year = {2025},
-  url = {https://github.com/yourusername/General-Relativity-Simulations},
-  note = {PHY 387M Project, University of Texas at Austin}
-}
-```
 
 ---
