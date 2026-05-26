@@ -10,7 +10,6 @@ from scipy.integrate import solve_ivp
 from typing import Tuple, List
 from dataclasses import dataclass
 
-
 # ============================================================================
 # METRIC BASE CLASS
 # ============================================================================
@@ -46,7 +45,6 @@ class Metric:
     def critical_impact_parameter(self, is_timelike: bool = False) -> float:
         """Return critical impact parameter for capture."""
         raise NotImplementedError("Subclasses must implement critical_impact_parameter")
-
 
 # ============================================================================
 # SCHWARZSCHILD METRIC
@@ -308,7 +306,6 @@ class SchwarzschildMetric(Metric):
                 raise ValueError(f"Unknown radial_direction: {radial_direction}")
         
         return np.array([t0, r0, phi0, dt_dtau, dr_dtau, dphi_dtau])
-
 
 # ============================================================================
 # KERR METRIC
@@ -597,7 +594,6 @@ class KerrMetric(Metric):
         
         return np.array([t0, r0, phi0, dt_dtau, dr_dtau, dphi_dtau])
 
-
 # ============================================================================
 # GEODESIC INTEGRATOR
 # ============================================================================
@@ -648,7 +644,6 @@ class GeodesicIntegrator:
         
         return solution
 
-
 # ============================================================================
 # TRAJECTORY CLASS
 # ============================================================================
@@ -698,7 +693,6 @@ class Trajectory:
     
     def __len__(self):
         return len(self.tau)
-
 
 # ============================================================================
 # SIMULATION CLASS
@@ -786,8 +780,7 @@ class GeodesicSimulation:
         particle_type = "massive" if is_timelike else "photon"
         
         print(f"\n{'='*60}")
-        print(f"Simulating {particle_type}s around {self.metric.__class__.__name__}")
-        print(f"Critical impact parameter: b_crit = {b_crit:.3f} M")
+                print(f"Critical impact parameter: b_crit = {b_crit:.3f} M")
         print(f"Initial radius: r₀ = {r0:.2f} M")
         print(f"Radial direction: {radial_direction}")
         print(f"{'='*60}\n")
@@ -826,8 +819,7 @@ class GeodesicSimulation:
         
         particle_type = "massive" if is_timelike else "photon"
         print(f"\n{'='*60}")
-        print(f"Simulating {n_particles} random {particle_type}s")
-        print(f"{'='*60}\n")
+                print(f"{'='*60}\n")
         
         # Random initial conditions
         r0_values = np.random.uniform(r_range[0], r_range[1], n_particles)

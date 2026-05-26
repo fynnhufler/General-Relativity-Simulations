@@ -35,25 +35,11 @@ HORIZON_COLOR = 'black'
 HORIZON_RING_COLOR = 'white'
 ERGOSPHERE_COLOR = '#FF6B6B'
 
-print("\n" + "="*70)
-print("KERR BLACK HOLE SIMULATIONS - SCATTER MODE")
-print("50 Photons from Single Source Point")
-print("="*70)
-
-# Spin parameters to simulate
-spin_configs = [
-    (0.0, "Schwarzschild (a=0)", "schwarzschild"),
-    (0.5, "Moderate Spin (a=0.5M)", "moderate"),
-    (0.9, "Fast Spin (a=0.9M)", "fast"),
-    (0.998, "Near-Extremal (a=0.998M)", "extremal")
 ]
 
 for spin, description, filename in spin_configs:
     
-    print("\n" + "="*70)
-    print(f"SIMULATION: {description}")
-    print("="*70)
-    
+                
     start_time = time.time()
     
     # Create Kerr metric
@@ -81,8 +67,7 @@ for spin, description, filename in spin_configs:
     
     trajectories = []
     
-    print(f"\nSimulating {n_photons} photons (SCATTER MODE)...")
-    print(f"  Source position: r={r0_start}M, φ={np.degrees(phi0_start):.0f}°")
+        print(f"  Source position: r={r0_start}M, φ={np.degrees(phi0_start):.0f}°")
     print(f"  Impact parameters: b ∈ [2, 12]M")
     print(f"  Angular spread: ±17°")
     
@@ -115,16 +100,13 @@ for spin, description, filename in spin_configs:
             if i % 10 == 0:  # Print every 10th
                 print(f"  Photon {i+1}/50: b={b:.2f}M, φ={np.degrees(phi0):.1f}°, {fate}")
     
-    elapsed = time.time() - start_time
-    print(f"Simulation complete in {elapsed:.2f}s")
-    print(f"   Generated {len(trajectories)} trajectories")
+        print(f"   Generated {len(trajectories)} trajectories")
     
     # ========================================================================
     # STATIC PLOT
     # ========================================================================
     
-    print("Creating static plot...")
-    
+        
     fig, ax = plt.subplots(figsize=(14, 14))
     ax.set_facecolor('#1a1a1a')
     fig.patch.set_facecolor('#1a1a1a')
@@ -203,14 +185,12 @@ for spin, description, filename in spin_configs:
                 dpi=150, facecolor='#1a1a1a')
     plt.close()
     
-    print(f"Saved: results/plots/kerr_{filename}_scatter_static.png")
-    
+        
     # ========================================================================
     # ANIMATION
     # ========================================================================
     
-    print("Creating animation...")
-    
+        
     fig, ax = plt.subplots(figsize=(14, 14))
     ax.set_facecolor('#1a1a1a')
     fig.patch.set_facecolor('#1a1a1a')
@@ -292,5 +272,4 @@ for spin, description, filename in spin_configs:
     anim.save(f'./results/videos/kerr_{filename}_scatter.gif', writer=writer, dpi=80)
     plt.close()
     
-    print(f"Saved: results/videos/kerr_{filename}_scatter.gif")
-    print(f"   Time for this spin: {time.time() - start_time:.2f}s")
+        # (removed)

@@ -12,7 +12,6 @@ from matplotlib.patches import Circle
 from matplotlib.colors import LinearSegmentedColormap
 from geodesics import GeodesicSimulation, SchwarzschildMetric, KerrMetric
 
-
 def create_celestial_grid(n_alpha=40, n_beta=40):
     """
     Create a grid of initial directions for photon ray tracing.
@@ -34,7 +33,6 @@ def create_celestial_grid(n_alpha=40, n_beta=40):
     beta = np.linspace(-beta_max, beta_max, n_beta)
     
     return np.meshgrid(alpha, beta)
-
 
 def trace_ray_backward(sim, observer_r, alpha, beta, max_tau=200):
     """
@@ -94,7 +92,6 @@ def trace_ray_backward(sim, observer_r, alpha, beta, max_tau=200):
     else:
         final_phi = trajectory.phi[-1]
         return "escaped", final_phi
-
 
 def create_celestial_map(metric, observer_r=10.0, n_rays=30):
     """
@@ -174,7 +171,6 @@ def create_celestial_map(metric, observer_r=10.0, n_rays=30):
     
     return fig, ax
 
-
 def plot_trajectory_bundle(trajectories, metric, title="Photon Trajectories"):
     """
     Plot a bundle of photon trajectories with celestial coordinates.
@@ -240,7 +236,6 @@ def plot_trajectory_bundle(trajectories, metric, title="Photon Trajectories"):
     
     return fig, ax
 
-
 def compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=25):
     """
     Create side-by-side comparison of Schwarzschild and Kerr shadows.
@@ -255,20 +250,7 @@ def compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=25):
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
     
     # Schwarzschild
-    print("\n" + "="*70)
-    print("Computing Schwarzschild shadow...")
-    print("="*70)
-    metric_sch = SchwarzschildMetric(mass=1.0)
-    sim_sch = GeodesicSimulation(metric_sch)
-    
-    alphas, betas = create_celestial_grid(n_rays, n_rays)
-    captured_sch = np.zeros_like(alphas, dtype=bool)
-    
-    for i in range(n_rays):
-        for j in range(n_rays):
-            fate, _ = trace_ray_backward(sim_sch, observer_r, alphas[i,j], betas[i,j])
-            captured_sch[i, j] = (fate == "captured")
-    
+            
     alphas_deg = np.rad2deg(alphas)
     betas_deg = np.rad2deg(betas)
     
@@ -283,10 +265,7 @@ def compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=25):
     axes[0].grid(True, alpha=0.3)
     
     # Kerr moderate spin
-    print("\n" + "="*70)
-    print("Computing Kerr shadow (a=0.5M)...")
-    print("="*70)
-    metric_kerr1 = KerrMetric(mass=1.0, spin=0.5)
+                metric_kerr1 = KerrMetric(mass=1.0, spin=0.5)
     sim_kerr1 = GeodesicSimulation(metric_kerr1)
     
     captured_kerr1 = np.zeros_like(alphas, dtype=bool)
@@ -306,10 +285,7 @@ def compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=25):
     axes[1].grid(True, alpha=0.3)
     
     # Kerr high spin
-    print("\n" + "="*70)
-    print("Computing Kerr shadow (a=0.9M)...")
-    print("="*70)
-    metric_kerr2 = KerrMetric(mass=1.0, spin=0.9)
+                metric_kerr2 = KerrMetric(mass=1.0, spin=0.9)
     sim_kerr2 = GeodesicSimulation(metric_kerr2)
     
     captured_kerr2 = np.zeros_like(alphas, dtype=bool)
@@ -332,14 +308,5 @@ def compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=25):
     
     return fig, axes
 
-
 if __name__ == "__main__":
-    print("\n" + "="*70)
-    print("CELESTIAL SPHERE VISUALIZATION DEMO")
-    print("="*70)
-    
-    # Create comparison plot
-    fig, axes = compare_schwarzschild_kerr_shadows(observer_r=10.0, n_rays=30)
-    plt.savefig('black_hole_shadows.png', dpi=300, bbox_inches='tight')
-    print("\nSaved: black_hole_shadows.png")
-    plt.show()
+                plt.show()

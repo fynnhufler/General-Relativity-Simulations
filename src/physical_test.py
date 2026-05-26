@@ -10,17 +10,7 @@ from geodesics import SchwarzschildMetric, GeodesicSimulation
 def test_photon_capture_and_escape():
     """Test that photons behave correctly around critical impact parameter"""
     
-    print("\n" + "="*70)
-    print("VERIFICATION TEST: Photon Capture vs Escape")
-    print("="*70)
-    
-    # Create metric
-    metric = SchwarzschildMetric(mass=1.0)
-    sim = GeodesicSimulation(metric)
-    
-    b_crit = metric.b_crit_photon
-    print(f"\nCritical impact parameter: b_crit = {b_crit:.6f}M")
-    print(f"Expected: b_crit = √27 M = {np.sqrt(27):.6f}M")
+            print(f"Expected: b_crit = √27 M = {np.sqrt(27):.6f}M")
     
     # Test cases
     test_cases = [
@@ -30,10 +20,8 @@ def test_photon_capture_and_escape():
         (b_crit * 1.5, "ESCAPE", "should escape"),
     ]
     
-    print("\n" + "-"*70)
-    print(f"{'Impact Parameter':<20} {'Expected':<15} {'Result':<15} {'Status'}")
-    print("-"*70)
-    
+        print(f"{'Impact Parameter':<20} {'Expected':<15} {'Result':<15} {'Status'}")
+        
     all_passed = True
     
     for b, expected, description in test_cases:
@@ -68,58 +56,11 @@ def test_photon_capture_and_escape():
         if not passed:
             all_passed = False
     
-    print("-"*70)
-    
+        
     if all_passed:
-        print("\nALL TESTS PASSED")
-    else:
-        print("\nSOME TESTS FAILED")
-    
-    print("="*70 + "\n")
-    
-    return all_passed
-
-
-def test_energy_conservation():
-    """Test that energy is conserved along geodesics"""
-    
-    print("\n" + "="*70)
-    print("VERIFICATION TEST: Energy Conservation")
-    print("="*70)
-    
-    metric = SchwarzschildMetric(mass=1.0)
-    sim = GeodesicSimulation(metric)
-    
-    # Simulate a photon
-    traj = sim.simulate(
-        r0=15.0,
-        impact_param=6.0,
-        is_timelike=False,
-        E=1.0,
-        tau_span=(0, 100),
-        radial_direction="inward"
-    )
-    
+            
     if len(traj) < 10:
-        print("Trajectory too short for testing")
-        return False
-    
-    # Check energy conservation E = f * dt/dτ
-    energies = []
-    for i in range(len(traj)):
-        r = traj.r[i]
-        ut = traj.ut[i]
-        f = metric.metric_factor(r)
-        E = f * ut
-        energies.append(E)
-    
-    energies = np.array(energies)
-    E_mean = np.mean(energies)
-    E_std = np.std(energies)
-    E_var = np.max(energies) - np.min(energies)
-    
-    print(f"\nEnergy statistics:")
-    print(f"  Mean E = {E_mean:.10f}")
+            print(f"  Mean E = {E_mean:.10f}")
     print(f"  Std  E = {E_std:.10e}")
     print(f"  Variation = {E_var:.10e}")
     
@@ -132,54 +73,15 @@ def test_energy_conservation():
     else:
         print(f"\nFAIL: Energy not conserved. Variation = {E_var:.10e}")
     
-    print("="*70 + "\n")
-    
+        
     return conserved
-
 
 def test_null_constraint():
     """Test that null geodesic constraint is satisfied"""
     
-    print("\n" + "="*70)
-    print("VERIFICATION TEST: Null Geodesic Constraint")
-    print("="*70)
-    
-    metric = SchwarzschildMetric(mass=1.0)
-    sim = GeodesicSimulation(metric)
-    
-    # Simulate a photon
-    traj = sim.simulate(
-        r0=15.0,
-        impact_param=6.0,
-        is_timelike=False,
-        tau_span=(0, 100),
-        radial_direction="inward"
-    )
-    
+            
     if len(traj) < 10:
-        print("Trajectory too short for testing")
-        return False
-    
-    # Check null constraint
-    
-    constraints = []
-    for i in range(len(traj)):
-        r = traj.r[i]
-        ut = traj.ut[i]
-        ur = traj.ur[i]
-        uphi = traj.uphi[i]
-        
-        f = metric.metric_factor(r)
-        
-        constraint = -f * ut**2 + (1/f) * ur**2 + r**2 * uphi**2
-        constraints.append(constraint)
-    
-    constraints = np.array(constraints)
-    max_violation = np.max(np.abs(constraints))
-    mean_violation = np.mean(np.abs(constraints))
-    
-    print(f"\nNull constraint statistics:")
-    print(f"  Max |g_munu u^mu u^nu| = {max_violation:.10e}")
+            print(f"  Max |g_munu u^mu u^nu| = {max_violation:.10e}")
     print(f"  Mean |g_munu u^mu u^nu| = {mean_violation:.10e}")
     
     # Check if constraint is satisfied
@@ -191,21 +93,13 @@ def test_null_constraint():
     else:
         print(f"\nFAIL: Null constraint violated! Max = {max_violation:.10e}")
     
-    print("="*70 + "\n")
-    
+        
     return satisfied
-
 
 def main():
     """Run all tests"""
     
-    print("\n")
-    print("╔" + "="*68 + "╗")
-    print("║" + " "*68 + "║")
-    print("║" + "  GEODESIC SIMULATOR - VERIFICATION TESTS".center(68) + "║")
-    print("║" + " "*68 + "║")
-    print("╚" + "="*68 + "╝")
-    
+            
     results = []
     
     # Run tests
@@ -214,28 +108,9 @@ def main():
     results.append(("Null Constraint", test_null_constraint()))
     
     # Summary
-    print("\n" + "="*70)
-    print("TEST SUMMARY")
-    print("="*70)
-    
-    for name, passed in results:
-        status = "PASS" if passed else "FAIL"
-        print(f"{name:<30} {status}")
-    
-    print("="*70)
-    
+            
+        
     all_passed = all(passed for _, passed in results)
     
     if all_passed:
-        print("\nALL TESTS PASSED")
-    else:
-        print("\nSOME TESTS FAILED")
-    
-    print("\n")
-    
-    return all_passed
-
-
-if __name__ == "__main__":
-    success = main()
-    exit(0 if success else 1)
+            exit(0 if success else 1)

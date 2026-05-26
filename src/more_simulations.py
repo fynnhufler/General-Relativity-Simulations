@@ -29,41 +29,6 @@ ISCO_COLOR = '#00FF00'
 
 metric = SchwarzschildMetric(mass=1.0)
 
-print("\n" + "="*70)
-print("ADDITIONAL CREATIVE ANIMATIONS - CORRECTED ENERGIES")
-print("="*70)
-
-# ============================================================================
-# VIDEO 5: Particle Spray (Radial Explosion) - CORRECTED
-# ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 5: Particle Spray (Radial Explosion)")
-print("="*70)
-
-start_time = time.time()
-
-sim = GeodesicSimulation(metric)
-
-# Start from a point, shoot in all directions
-n_spray = 30
-r0_spray = 12.0  # Starting radius
-angles = np.linspace(0, 2*np.pi, n_spray, endpoint=False)
-
-trajectories_spray = []
-
-print("Simulating particle spray with correct energies...")
-for i, angle in enumerate(angles):
-    b = np.random.uniform(4, 9)
-    
-    # Mix of photons and massive
-    if i < n_spray // 2:
-        # Photons
-        traj = sim.simulate(
-            r0=r0_spray, phi0=angle, impact_param=b,
-            is_timelike=False, E=1.0, tau_span=(0, 400),
-            radial_direction="outward", label=f"spray_photon_{i}"
-        )
         trajectories_spray.append(('photon', traj))
     else:
         # Massive particles with AUTO energy
@@ -76,10 +41,8 @@ for i, angle in enumerate(angles):
         trajectories_spray.append(('massive', traj))
 
 elapsed = time.time() - start_time
-print(f"Complete in {elapsed:.2f}s")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -153,15 +116,9 @@ writer = PillowWriter(fps=20)
 anim5.save('./results/videos/video5_particle_spray_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video5_particle_spray_corrected.gif")
-
 # ============================================================================
 # VIDEO 6: Accretion Disk Simulation - CORRECTED
 # ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 6: Accretion Disk (Massive Particles) - CORRECTED")
-print("="*70)
 
 start_time = time.time()
 
@@ -174,7 +131,6 @@ phi_disk = np.random.uniform(0, 2*np.pi, n_disk)
 
 trajectories_disk = []
 
-print("Simulating accretion disk with physically correct energies...")
 for i in range(n_disk):
     r0 = r_disk[i]
     phi0 = phi_disk[i]
@@ -199,14 +155,12 @@ for i in range(n_disk):
     trajectories_disk.append((r0, traj))
 
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
 
 # Check if any crossed ISCO
 crossed_isco = sum(1 for _, t in trajectories_disk if len(t) > 0 and np.min(t.r) < 6.0)
 print(f"Particles that crossed ISCO: {crossed_isco}/{n_disk}")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -272,15 +226,9 @@ writer = PillowWriter(fps=20)
 anim6.save('./results/videos/video6_accretion_disk_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"💾 Saved: results/videos/video6_accretion_disk_corrected.gif")
-
 # ============================================================================
 # VIDEO 7: Critical Photon Orbits - UNCHANGED (photons only)
 # ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 7: Critical Photon Orbits (Unstable Photon Sphere)")
-print("="*70)
 
 start_time = time.time()
 
@@ -299,7 +247,6 @@ impact_params_critical = np.concatenate([
 
 trajectories_critical = []
 
-print("Simulating critical orbits...")
 for i, b in enumerate(impact_params_critical):
     traj = sim.simulate(
         r0=20.0, phi0=0, impact_param=b,
@@ -309,10 +256,8 @@ for i, b in enumerate(impact_params_critical):
     trajectories_critical.append(traj)
 
 elapsed = time.time() - start_time
-print(f"✅ Complete in {elapsed:.2f}s")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -375,4 +320,4 @@ writer = PillowWriter(fps=20)
 anim7.save('./results/videos/video7_critical_orbits.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video7_critical_orbits.gif")
+# (removed)

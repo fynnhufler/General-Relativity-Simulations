@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""
-Advanced Schwarzschild Animations - CORRECTED ENERGIES
-=======================================================
-Multiple scenarios with photons and massive particles
-NOW WITH PHYSICALLY CORRECT ENERGIES FOR MASSIVE PARTICLES
-"""
+"""Schwarzschild animations with photons and massive particles."""
 
 import sys
 sys.path.insert(0, './src')
@@ -33,36 +28,6 @@ ISCO_COLOR = '#00FF00'  # Green for ISCO
 
 metric = SchwarzschildMetric(mass=1.0)
 
-print("\n" + "="*70)
-print("ADVANCED SCHWARZSCHILD ANIMATIONS")
-print("Multiple Scenarios | Photons + Massive Particles")
-print("="*70)
-
-# ============================================================================
-# VIDEO 1: Random Particle Cloud (Mixed)
-# ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 1: Random Particle Cloud (Photons + Massive Particles)")
-print("="*70)
-
-start_time = time.time()
-
-sim = GeodesicSimulation(metric)
-
-# Mix of photons and massive particles
-n_photons = 25
-n_massive = 25
-
-trajectories_mixed = []
-
-# Random photons
-print("Simulating photons...")
-for i in range(n_photons):
-    r0 = np.random.uniform(10, 25)
-    phi0 = np.random.uniform(0, 2*np.pi)
-    b = np.random.uniform(3, 9)
-    direction = np.random.choice(['inward', 'outward', 'tangent'])
     
     traj = sim.simulate(
         r0=r0, phi0=phi0, impact_param=b,
@@ -73,7 +38,6 @@ for i in range(n_photons):
     trajectories_mixed.append(('photon', traj))
 
 # Random massive particles with CORRECT energies
-print("Simulating massive particles...")
 for i in range(n_massive):
     r0 = np.random.uniform(10, 25)
     phi0 = np.random.uniform(0, 2*np.pi)
@@ -90,10 +54,8 @@ for i in range(n_massive):
     trajectories_mixed.append(('massive', traj))
 
 elapsed = time.time() - start_time
-print(f"Complete in {elapsed:.2f}s")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -168,20 +130,13 @@ writer = PillowWriter(fps=20)
 anim1.save('./results/videos/video1_random_cloud_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video1_random_cloud_corrected.gif")
-
 # ============================================================================
 # VIDEO 2: Parallel Photon Beam (Gravitational Lensing) - UNCHANGED
 # ============================================================================
 
-print("\n" + "="*70)
-print("VIDEO 2: Parallel Photon Beam (Gravitational Lensing)")
-print("="*70)
-
 start_time = time.time()
 
 sim.clear()
-
 
 # Parallel beam from left side
 n_beam = 20
@@ -190,7 +145,6 @@ x_start = -20
 
 trajectories_beam = []
 
-print("Simulating parallel beam...")
 for i, y0 in enumerate(y_positions):
     # Start position: far left, at different y
     r0 = np.sqrt(x_start**2 + y0**2)
@@ -213,7 +167,6 @@ x_start = -50  # CHANGED: Start farther away
 
 trajectories_beam = []
 
-print("Simulating parallel beam (moving in +x direction)...")
 for i, y0 in enumerate(y_positions):
     r0 = np.sqrt(x_start**2 + y0**2)
     phi0 = np.arctan2(y0, x_start)
@@ -227,10 +180,8 @@ for i, y0 in enumerate(y_positions):
     )
 """
 elapsed = time.time() - start_time
-print(f"Complete in {elapsed:.2f}s")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(14, 10))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -291,15 +242,9 @@ writer = PillowWriter(fps=20)
 anim2.save('./results/videos/video2_parallel_beam.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video2_parallel_beam.gif")
-
 # ============================================================================
 # VIDEO 3: Photons vs Massive Particles
 # ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 3: Photons vs Massive Particles (Direct Comparison)")
-print("="*70)
 
 start_time = time.time()
 
@@ -311,7 +256,6 @@ impact_params_compare = np.linspace(4, 8, n_compare)
 
 trajectories_compare = []
 
-print("Simulating photons...")
 for i, b in enumerate(impact_params_compare):
     traj_photon = sim.simulate(
         r0=20.0, phi0=0, impact_param=b,
@@ -320,7 +264,6 @@ for i, b in enumerate(impact_params_compare):
     )
     trajectories_compare.append(('photon', traj_photon))
 
-print("Simulating massive particles with correct energies...")
 for i, b in enumerate(impact_params_compare):
     # AUTO-CALCULATE correct energy (not E=1.1!)
     traj_massive = sim.simulate(
@@ -332,10 +275,8 @@ for i, b in enumerate(impact_params_compare):
     trajectories_compare.append(('massive', traj_massive))
 
 elapsed = time.time() - start_time
-print(f"Complete in {elapsed:.2f}s")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -407,15 +348,9 @@ writer = PillowWriter(fps=20)
 anim3.save('./results/videos/video3_comparison_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video3_comparison_corrected.gif")
-
 # ============================================================================
 # VIDEO 4: Orbital Trajectories (Massive Particles Only)
 # ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 4: Orbital Trajectories (Massive Particles)")
-print("="*70)
 
 start_time = time.time()
 
@@ -424,8 +359,6 @@ sim.clear()
 # Various starting radii outside ISCO
 n_orbits = 12
 trajectories_orbits = []
-
-print("Simulating orbital trajectories...")
 
 # Start at various radii, all outside ISCO
 r_starts = np.linspace(7.0, 15.0, n_orbits)
@@ -448,10 +381,8 @@ for i, r0 in enumerate(r_starts):
     trajectories_orbits.append(traj)
 
 elapsed = time.time() - start_time
-print(f"Complete in {elapsed:.2f}s")
 
 # Animate
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -514,15 +445,9 @@ writer = PillowWriter(fps=20)
 anim4.save('./results/videos/video4_orbits_corrected.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video4_orbits_corrected.gif")
-
 # ============================================================================
 # VIDEO 5: Energy Dependence
 # ============================================================================
-
-print("\n" + "="*70)
-print("VIDEO 5: Energy Dependence")
-print("="*70)
 
 start_time = time.time()
 
@@ -548,7 +473,6 @@ energy_labels = []
 print(f"Starting radius: r0 = {r0}M")
 print(f"Impact parameter: b = {b}M")
 print(f"Circular energy: E_circ = {E_circ:.4f}")
-print(f"\nSimulating {len(energies)} trajectories...")
 
 for E, label in energies:
     traj = sim.simulate(
@@ -565,10 +489,8 @@ for E, label in energies:
         print(f"  {label}: min_r={min_r:.2f}M, final_r={final_r:.2f}M")
 
 elapsed = time.time() - start_time
-print(f"Complete in {elapsed:.2f}s")
 
 # Animate Video 5
-print("Creating animation...")
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
 fig.patch.set_facecolor('#1a1a1a')
@@ -659,19 +581,12 @@ writer = PillowWriter(fps=20)
 anim5.save('./results/videos/video5_energy_dependence.gif', writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: results/videos/video5_energy_dependence.gif")
-
 metric = SchwarzschildMetric(mass=1.0)
-
-print("\n" + "="*70)
-print("VIDEO 5: Energy Dependence")
-print("="*70)
 
 # ============================================================================
 # Simulate Trajectories
 # ============================================================================
 
-print("\nSimulating trajectories...")
 start_time = time.time()
 
 sim = GeodesicSimulation(metric)
@@ -695,7 +610,6 @@ energy_labels = []
 print(f"Starting radius: r0 = {r0}M")
 print(f"Impact parameter: b = {b}M")
 print(f"Circular energy: E_circ = {E_circ:.4f}")
-print(f"\nSimulating {len(energies)} trajectories (long: τ=2000M)...")
 
 for E, label in energies:
     traj = sim.simulate(
@@ -713,14 +627,9 @@ for E, label in energies:
         n_orbits = abs(traj.phi[-1] - traj.phi[0]) / (2*np.pi)
         print(f"  {label}: min_r={min_r:.2f}M, final_r={final_r:.2f}M, orbits={n_orbits:.1f}")
 
-elapsed = time.time() - start_time
-print(f" Simulation complete in {elapsed:.2f}s")
-
 # ============================================================================
 # Create Animation
 # ============================================================================
-
-print("\nCreating animation (FAST: 2x speed, 350 frames)...")
 
 fig, ax = plt.subplots(figsize=(12, 12))
 ax.set_facecolor('#1a1a1a')
@@ -826,4 +735,4 @@ print(f"\nSaving animation...")
 anim.save(output_file, writer=writer, dpi=80)
 plt.close()
 
-print(f"Saved: {output_file}")
+# (removed)
